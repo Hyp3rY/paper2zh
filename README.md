@@ -1,4 +1,4 @@
-# pdf2zh — 英文论文 PDF → 中文 Markdown
+# paper2zh — 英文论文 PDF → 中文 Markdown
 
 把英文论文 PDF 变成中文 Markdown，**公式还是公式、图片还在原位、表格不散架**。
 
@@ -29,7 +29,7 @@
 
 ## 下载
 
-到 [Releases](https://github.com/Hyp3rY/pdf2zh/releases/latest) 下载：
+到 [Releases](https://github.com/Hyp3rY/paper2zh/releases/latest) 下载：
 
 | 文件 | 大小 | 用于 |
 |---|---|---|
