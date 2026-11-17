@@ -1,0 +1,15 @@
+{
+  "bundle": "pdf2zh",
+  "bundle_version": "1.0.0",
+  "platform": "win-x64",
+  "python": "3.12.10",
+  "mineru": "4.2.2",
+  "requirements_sha256": "f55a6f3f7dc9c64730643d21382ea6d7995faf1508cf38933e2ec52f8b817b81",
+  "models": {
+    "tier": "standard",
+    "source": "modelscope",
+    "approx_size_gb": 2.0
+  },
+  "built_at": "2026-11-17T07:49:45Z",
+  "builder": "build/build_light.ps1"
+}

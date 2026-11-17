@@ -1,0 +1,27 @@
+# 运行时与模型：由安装脚本现场下载，不进仓库
+runtime/
+home/
+models/
+bootstrap/
+
+# 构建产物
+build/out/
+*.zip
+*.7z
+*.exe
+
+# 测试与缓存
+.cache/
+__pycache__/
+*.pyc
+.venv/
+.env
+
+# 用户产物
+翻译结果/
+
+# 系统垃圾
+*.log
+Thumbs.db
+desktop.ini
+.DS_Store

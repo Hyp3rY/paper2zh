@@ -1,0 +1,49 @@
+en,zh
+attention,注意力
+self-attention,自注意力
+multi-head attention,多头注意力
+encoder,编码器
+decoder,解码器
+embedding,嵌入
+layer normalization,层归一化
+residual connection,残差连接
+feed-forward network,前馈网络
+positional encoding,位置编码
+sequence transduction,序列转换
+token,词元
+hyperparameter,超参数
+gradient descent,梯度下降
+batch size,批量大小
+learning rate,学习率
+overfitting,过拟合
+regularization,正则化
+ablation study,消融实验
+state of the art,当前最优
+benchmark,基准
+baseline,基线
+inference,推理
+training,训练
+fine-tuning,微调
+dataset,数据集
+corpus,语料库
+BLEU,BLEU
+perplexity,困惑度
+transformer,Transformer
+recurrent neural network,循环神经网络
+convolutional neural network,卷积神经网络
+long short-term memory,长短期记忆
+gated recurrent unit,门控循环单元
+beam search,束搜索
+greedy decoding,贪心解码
+query,查询
+key,键
+value,值
+dot product,点积
+softmax,softmax
+masking,掩蔽
+dropout,dropout
+gradient clipping,梯度裁剪
+checkpoint,检查点
+throughput,吞吐量
+latency,延迟
+
