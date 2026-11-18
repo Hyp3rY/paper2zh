@@ -7,7 +7,7 @@
 > **适用平台：Windows 10 / 11（x64）。** 本项目由 `.cmd` 启动器 + 嵌入式 Windows Python +
 > MinerU 的 Windows 基础包（DirectML / Vulkan）组成，**不支持 macOS 和 Linux**。
 > 其他平台可以直接用 [MinerU](https://github.com/opendatalab/MinerU) 本体解析，
-> 但本项目的「双击安装、装进 AI 工具」这一层不适用。
+> 但本项目的「让 AI 帮你装」「手动怎么装（两步）」这一层不适用。
 
 ## 让 AI 帮你装（不想碰命令行就选这个）
 
