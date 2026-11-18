@@ -9,8 +9,6 @@
 > 其他平台可以直接用 [MinerU](https://github.com/opendatalab/MinerU) 本体解析，
 > 但本项目的「双击安装、装进 AI 工具」这一层不适用。
 
-> 早期版本叫 `pdf2zh`，因与 [PDFMathTranslate](https://github.com/PDFMathTranslate/PDFMathTranslate) 的同名工具冲突而更名；旧链接会 301 到新仓库。
-
 ## 让 AI 帮你装（不想碰命令行就选这个）
 
 复制这一句，发给能执行本机命令的 AI（Claude Code / Codex / DSH / WorkBuddy / 豆包工作等桌面客户端）：
@@ -171,6 +169,8 @@ paper2zh.cmd export --workdir "<产物目录>"           :: 事后补导（不�
 - 图片按原文版面比例显示（`<img width=…>`），多子图按原版面合成表格；
   要纯 Markdown 语法可设 `PAPER2ZH_PLAIN_IMAGES=1`，关掉子图排版设 `PAPER2ZH_FIGURE_GRID=0`
 - 安装路径含中文时，程序会自动把推理库复制到 `%LOCALAPPDATA%\paper2zh\libs` 以兼容
+
+> 早期版本叫 `pdf2zh`，因与 [PDFMathTranslate](https://github.com/PDFMathTranslate/PDFMathTranslate) 的同名工具冲突而更名；旧链接会 301 到新仓库。
 
 ## 许可
 
