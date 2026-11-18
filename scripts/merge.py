@@ -275,6 +275,16 @@ def main(argv: list[str]) -> int:
     header_keys = middle.running_header_keys(reference_model)
     dropped_headers = middle.clear_blocks(zh_mj, header_keys)
     dedupe_author_prefix(zh_mj)
+
+    import translate as translate_mod
+    glossary = translate_mod.read_glossary(workdir)
+    reference_for_cleanup = middle.load_middle(middle_path)
+    terms_fixed = middle.enforce_glossary(zh_mj, glossary, reference_for_cleanup)
+    authors_fixed = middle.fix_author_lines(zh_mj, reference_for_cleanup)
+    hyphens_fixed = middle.tidy_punctuation(zh_mj)
+    if terms_fixed or authors_fixed or hyphens_fixed:
+        paths.say(f"[合并] 统一术语 {terms_fixed} 处；作者行保留原名 {authors_fixed} 处；"
+                  f"中文连字符 {hyphens_fixed} 处")
     if dropped_headers:
         paths.say(f"[合并] 去掉重复页眉/页脚 {dropped_headers} 处")
 
@@ -298,17 +308,22 @@ def main(argv: list[str]) -> int:
     zh_renderer, grid_stats = middle.prepare_image_layout(
         zh_mj, reference=reference_mj, enabled=grid_enabled)
     zh_md = middle.render_markdown(zh_mj, image_renderer=zh_renderer)
+    md_replacements = middle.glossary_replacements(glossary)
+    zh_md, md_fixed = middle.replace_terms_in_text(zh_md, md_replacements)
 
     bilingual_mj = middle.load_middle(middle_path)
     middle.apply_translations(bilingual_mj, translations, bilingual=True)
     middle.clear_blocks(bilingual_mj, header_keys)
     dedupe_author_prefix(bilingual_mj)
+    middle.enforce_glossary(bilingual_mj, glossary, reference_for_cleanup)
+    middle.tidy_punctuation(bilingual_mj)
     if stitch_enabled:
         stitch_continuations(bilingual_mj, translations, bilingual=True, sources=source_texts)
     middle.relocate_main_captions(bilingual_mj)
     bi_renderer, _ = middle.prepare_image_layout(
         bilingual_mj, reference=middle.load_middle(middle_path), enabled=grid_enabled)
     bilingual_md = middle.render_markdown(bilingual_mj, image_renderer=bi_renderer)
+    bilingual_md, _ = middle.replace_terms_in_text(bilingual_md, md_replacements)
 
     (workdir / "zh.md").write_text(zh_md, encoding="utf-8")
 

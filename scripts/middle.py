@@ -291,6 +291,178 @@ def detect_figure_grids(reference) -> dict[tuple[int, int], dict]:
     return plan
 
 
+GLOSSARY_VARIANTS = {
+    "blade": ["叶片"],
+    "advancing side": ["前进侧", "推进侧"],
+    "retreating side": ["后退侧", "退行侧"],
+    "angle of attack": ["攻角"],
+    "wake": ["尾流"],
+    "penalty": ["惩罚"],
+}
+
+
+def glossary_replacements(glossary: dict[str, str]) -> dict[str, str]:
+    """术语表 + 常见变体 → 规范译法。"""
+    replacements: dict[str, str] = {}
+    for term, canonical in glossary.items():
+        for variant in GLOSSARY_VARIANTS.get(term.lower().replace("-", " "), []):
+            if variant and variant != canonical:
+                replacements[variant] = canonical
+    for term, canonical in glossary.items():
+        if term.lower().replace("-", " ") == "advancing side" and canonical == "前行侧":
+            replacements["后退侧"] = "后行侧"
+            replacements["退行侧"] = "后行侧"
+    return replacements
+
+
+def replace_terms_in_text(text: str, replacements: dict[str, str]) -> tuple[str, int]:
+    changed = 0
+    for variant, canonical in replacements.items():
+        if variant in text:
+            text = text.replace(variant, canonical)
+            changed += 1
+    return text, changed
+
+
+def enforce_glossary(mj, glossary: dict[str, str], reference=None) -> int:
+    """按术语表统一译文用词（纯字符串替换，不消耗模型 token）。"""
+    ref_blocks = {}
+    if reference is not None:
+        ref_blocks = {(page.page_idx, index): block
+                      for page in reference.pages for index, block in enumerate(page.blocks or [])}
+    changed = 0
+    for page_idx, index, block in iter_blocks(mj):
+        if getattr(block, "type", None) not in {"text", "caption", "doc_title", "paragraph_title"}:
+            continue
+        spans = spans_of(block) or []
+        ref = ref_blocks.get((page_idx, index))
+        source, _ = build_source(spans_of(ref) or []) if ref is not None else build_source(spans)
+        if not source:
+            continue
+        source_norm = source.replace("-", " ")
+        for term, canonical in glossary.items():
+            if not canonical:
+                continue
+            term_norm = term.replace("-", " ")
+            if not re.search(rf"\b{re.escape(term_norm)}\b", source_norm, re.I):
+                continue
+            variant_key = term.lower().replace("-", " ")
+            for variant in GLOSSARY_VARIANTS.get(variant_key, []):
+                if variant == canonical:
+                    continue
+                for span in spans:
+                    if getattr(span, "type", None) != "text":
+                        continue
+                    text = str(span.content)
+                    if variant in text:
+                        span.content = text.replace(variant, canonical)
+                        changed += 1
+
+        # 成对术语：术语表只收了「前行侧」时，把它对应的「后行侧」也统一
+        advancing = ""
+        for term, canonical in glossary.items():
+            if term.lower().replace("-", " ") == "advancing side":
+                advancing = canonical
+                break
+        if advancing == "前行侧":
+            for span in spans:
+                if getattr(span, "type", None) != "text":
+                    continue
+                text = str(span.content)
+                new_text = text.replace("后退侧", "后行侧").replace("退行侧", "后行侧")
+                if new_text != text:
+                    span.content = new_text
+                    changed += 1
+
+    # 表格单元格不在 text span 里，单独对表格 HTML 做同样的替换
+    replacements: dict[str, str] = {}
+    for term, canonical in glossary.items():
+        for variant in GLOSSARY_VARIANTS.get(term.lower().replace("-", " "), []):
+            if variant != canonical:
+                replacements[variant] = canonical
+    for term, canonical in glossary.items():
+        if term.lower().replace("-", " ") == "advancing side" and canonical == "前行侧":
+            replacements["后退侧"] = "后行侧"
+            replacements["退行侧"] = "后行侧"
+    if replacements:
+        # 先对全篇文本做一次兜底：有些句子把 "advancing side" 简写成 "advancing"，
+        # 按原文匹配抓不到，但译文里的变体词本身已经足够明确。
+        for _, _, block in iter_blocks(mj):
+            if getattr(block, "type", None) not in {
+                "text", "caption", "doc_title", "paragraph_title"
+            }:
+                continue
+            for span in spans_of(block) or []:
+                if getattr(span, "type", None) != "text":
+                    continue
+                text = str(span.content)
+                new_text = text
+                for variant, canonical in replacements.items():
+                    if variant in new_text:
+                        new_text = new_text.replace(variant, canonical)
+                if new_text != text:
+                    span.content = new_text
+                    changed += 1
+
+        for _, _, block in iter_blocks(mj):
+            if getattr(block, "type", None) != "table":
+                continue
+            for item in block.content or []:
+                text = getattr(item, "content", None)
+                if not isinstance(text, str):
+                    continue
+                new_text = text
+                for variant, canonical in replacements.items():
+                    if variant in new_text:
+                        new_text = new_text.replace(variant, canonical)
+                if new_text != text:
+                    item.content = new_text
+                    changed += 1
+    return changed
+
+
+def fix_author_lines(mj, reference) -> int:
+    """作者行必须保留原名；本地小模型会音译，这里按原文恢复。"""
+    ref_blocks = {(page.page_idx, index): block
+                  for page in reference.pages for index, block in enumerate(page.blocks or [])}
+    fixed = 0
+    for page_idx, index, block in iter_blocks(mj):
+        if getattr(block, "type", None) != "text":
+            continue
+        ref = ref_blocks.get((page_idx, index))
+        if ref is None:
+            continue
+        source, _ = build_source(spans_of(ref) or [])
+        source = source.strip()
+        if not (10 <= len(source) <= 400) or re.search(r"[.!?]", source):
+            continue
+        names = re.findall(r"\b[A-Z][a-z]+\s+[A-Z][a-z]+\b", source)
+        if len(names) < 2 or not re.search(r"\d", source):
+            continue
+        spans = [sp for sp in (spans_of(block) or []) if getattr(sp, "type", None) == "text"]
+        if not spans or not any(re.search(r"[\u4e00-\u9fff]", str(sp.content)) for sp in spans):
+            continue
+        block.content = rebuild_spans("作者：" + source)
+        fixed += 1
+    return fixed
+
+
+def tidy_punctuation(mj) -> int:
+    """中文之间多余的空格连字符：`旋翼 - 机体` → `旋翼-机体`。"""
+    changed = 0
+    pattern = re.compile(r"(?<=[\u4e00-\u9fff])\s*-\s*(?=[\u4e00-\u9fff])")
+    for _, _, block in iter_blocks(mj):
+        for span in spans_of(block) or []:
+            if getattr(span, "type", None) != "text":
+                continue
+            text = str(span.content)
+            new = pattern.sub("-", text)
+            if new != text:
+                span.content = new
+                changed += 1
+    return changed
+
+
 def relocate_main_captions(mj) -> int:
     """把「图注挂在下一组第一张子图上」的错位修回来。
 

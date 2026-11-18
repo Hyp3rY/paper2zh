@@ -20,23 +20,6 @@
 
 > 纯聊天 AI 没有终端权限，无法使用。
 
-## 项目背景
-
-这个项目起源于一个具体问题：让 AI 直接读英文论文 PDF，它往往会现场写一堆
-`pdfplumber` / `PyPDF2` / OCR 脚本，反复试错、烧掉大量 token，最后公式、图片、表格还容易坏。
-
-作者想做的不是「另一个 PDF 翻译器」，而是把这件事拆成两半：
-
-- **解析、回填、渲染、质检**交给确定性脚本（MinerU + 本项目）；
-- **翻译**交给 AI，因为这是它真正擅长的事。
-
-于是有了这个 skill：AI 拿到的不是「一个 PDF」，而是一份已经切好块、公式已经保护好的段落清单；
-它只负责翻译和判断，最终 Markdown 由 MinerU 官方渲染器生成。这样公式、图片、表格能逐字节保真，
-译文质量则取决于执行翻译的模型。
-
-目标用户很明确：**Windows 上不懂命令行的同事**——把仓库链接丢给 AI 安装，之后只跟 AI 说话。
-所以整个项目刻意没有 GUI、没有云服务、不装 torch、不要求管理员权限，也不要求用户会命令行。
-
 ## 下载
 
 到 [Releases](https://github.com/Hyp3rY/paper2zh/releases/latest) 下载：
@@ -48,31 +31,6 @@
 
 > 文件名里的 `*` 是版本号，**不用记**——到 [最新 Release](https://github.com/Hyp3rY/paper2zh/releases/latest)
 > 看当前版本即可。下载轻包后，直接看下一节「怎么装」。
-
-## 建议配置与占用空间
-
-| 项目 | 建议 |
-|---|---|
-| 系统 | Windows 10 / 11，64 位（**只支持 Windows**） |
-| 内存 | 最低 8 GB，推荐 16 GB |
-| 硬盘剩余 | 至少 6 GB（安装脚本会检查），推荐留 10 GB |
-| 显卡 | 可选。有独显（≥ 6 GB 显存，支持 Vulkan / DirectML）会自动走 `standard` 档，快很多；没有就自动用 CPU 的 `basic` 档，慢 3–5 倍 |
-| 网络 | 轻包首次安装要下载约 2.8 GB；完整包可完全断网 |
-| 权限 | **不需要管理员权限**，不写注册表、不改 PATH |
-
-**占用空间**
-
-| 阶段 | 占用 |
-|---|---|
-| 轻包 zip | 12.6 MB |
-| 轻包解压后 | 约 24 MB |
-| 轻包装完（依赖 + 模型） | **约 2.8 GB**（实测 2.74 GB：依赖 760 MB + 模型 2,022 MB + Python 21 MB） |
-| 完整包 zip | 1.94 GB |
-| 完整包解压后 | 约 2.55 GB（依赖和模型都在里面，不再下载） |
-| 每篇论文产物 | 约 5–10 MB（实测 9 MB 左右，图片多的论文更大） |
-| 中文路径兼容副本 | 约 60 MB（`%LOCALAPPDATA%\paper2zh\libs`，只有安装路径含中文时才生成） |
-
-> 安装过程中 pip 还会占用 0.5–1 GB 缓存（`%LOCALAPPDATA%\pip\Cache`），装完可以删，不影响使用。
 
 ## 手动怎么装（两步）
 
@@ -104,7 +62,47 @@ qa.json          自动检查结果
 
 给 agent / 终端用时统一走纯 ASCII 的 `paper2zh.cmd`；普通用户不需要命令，直接 `/paper2zh` 即可。
 
-## 翻译速度取决于你用的 AI 模型
+## 支持的 agent
+
+| 工具 | 读取位置 |
+|---|---|
+| DSH / Codex / Cursor / Gemini CLI | `~\.agents\skills\paper2zh` |
+| Claude Code | `~\.claude\skills\paper2zh` |
+| WorkBuddy 国服 | `~\.workbuddy\skills\paper2zh` |
+| WorkBuddy 国际服 | `~\.workbuddy-ai\skills\paper2zh` |
+| 豆包 | `~\Doubao\skills\paper2zh` 与 `…\.doubao\agent_mode\workspace\.user_skills\paper2zh` |
+
+安装脚本会先探测这些客户端在不在，装完再刷新；纯 UI 导入的客户端可以用同目录下生成的
+`paper2zh-skill.zip` 手动导入。WorkBuddy / 豆包装完需要**重启客户端**才会在「技能」里出现。
+
+skill 只用通用字段（`name` / `description` / `whenToUse`），不用任何厂商私有扩展。
+
+## 建议配置与占用空间
+
+| 项目 | 建议 |
+|---|---|
+| 系统 | Windows 10 / 11，64 位（**只支持 Windows**） |
+| 内存 | 最低 8 GB，推荐 16 GB |
+| 硬盘剩余 | 至少 6 GB（安装脚本会检查），推荐留 10 GB |
+| 显卡 | 可选。有独显（≥ 6 GB 显存，支持 Vulkan / DirectML）会自动走 `standard` 档，快很多；没有就自动用 CPU 的 `basic` 档，慢 3–5 倍 |
+| 网络 | 轻包首次安装要下载约 2.8 GB；完整包可完全断网 |
+| 权限 | **不需要管理员权限**，不写注册表、不改 PATH |
+
+**占用空间**
+
+| 阶段 | 占用 |
+|---|---|
+| 轻包 zip | 12.6 MB |
+| 轻包解压后 | 约 24 MB |
+| 轻包装完（依赖 + 模型） | **约 2.8 GB**（实测 2.74 GB：依赖 760 MB + 模型 2,022 MB + Python 21 MB） |
+| 完整包 zip | 1.94 GB |
+| 完整包解压后 | 约 2.55 GB（依赖和模型都在里面，不再下载） |
+| 每篇论文产物 | 约 5–10 MB（实测 9 MB 左右，图片多的论文更大） |
+| 中文路径兼容副本 | 约 60 MB（`%LOCALAPPDATA%\paper2zh\libs`，只有安装路径含中文时才生成） |
+
+> 安装过程中 pip 还会占用 0.5–1 GB 缓存（`%LOCALAPPDATA%\pip\Cache`），装完可以删，不影响使用。
+
+## 翻译速度、成本与本地模型
 
 paper2zh 只负责解析、切块、回填和质检；**真正翻译的是你选的那个 AI 模型**。
 同一篇论文，换一个模型，总耗时可能差 3–5 倍，这跟工具本身无关。
@@ -144,6 +142,32 @@ paper2zh 只负责解析、切块、回填和质检；**真正翻译的是你选
 > 多出来的 4 分钟如果是人干等，时间成本通常高于省下的 ¥0.17–0.45；
 > 后台跑、批量跑或隐私场景，才是本地模式划算的地方。
 
+
+### 本地翻译质量（9B 级模型）
+
+实测 18 页论文：本地译文可读、公式和数字完整，但有三个常见短板：
+
+- 术语会临时换词（前行侧/前进侧、机体/机身、桨叶/叶片）；
+- 作者名会被音译；
+- 少量字面直译和语序问题。
+
+新版 `finish` 会自动按 `glossary.csv` 统一术语、恢复作者原名、清理中文连字符；
+语义问题仍需人工抽查。**术语表先用当前在线模型确认**，本地模型只负责按表翻译。
+
+### 本地模型参数（实测）
+
+| 项 | 建议 |
+|---|---|
+| 模型 | Qwen3.5-9B Q4（约 6.5 GB 权重） |
+| 上下文 | 16384（8 GB 卡约 7.5 GB）；紧张时 8192 |
+| GPU Offload | 拉满 |
+| Enable Thinking | **关**（否则只输出 reasoning） |
+| Temperature | 0.2 |
+| Top P | 0.95 |
+| Presence Penalty | 0（1.5 会让术语换词） |
+| Max Concurrent | 1 |
+| 已加载模型 | 只加载一个；`local` 只使用已加载的模型 |
+
 ### 本地模型（可选）
 
 本机装了 LM Studio 的话，可以让脚本直连本地模型，不占 AI 的上下文：
@@ -159,21 +183,6 @@ paper2zh.cmd local --workdir "<产物目录>" --limit 20
 - **只使用 LM Studio 里已经加载的模型**，不会自动加载；多个模型同时加载时会要求你指定；
 - `paper2zh.cmd local --probe` 可以看当前已加载的是哪个；
 - 解析完如果检测到本地模型，工具会提示你选择；想用当前 AI 模型就加 `next --agent`。
-
-## 支持的 agent
-
-| 工具 | 读取位置 |
-|---|---|
-| DSH / Codex / Cursor / Gemini CLI | `~\.agents\skills\paper2zh` |
-| Claude Code | `~\.claude\skills\paper2zh` |
-| WorkBuddy 国服 | `~\.workbuddy\skills\paper2zh` |
-| WorkBuddy 国际服 | `~\.workbuddy-ai\skills\paper2zh` |
-| 豆包 | `~\Doubao\skills\paper2zh` 与 `…\.doubao\agent_mode\workspace\.user_skills\paper2zh` |
-
-安装脚本会先探测这些客户端在不在，装完再刷新；纯 UI 导入的客户端可以用同目录下生成的
-`paper2zh-skill.zip` 手动导入。WorkBuddy / 豆包装完需要**重启客户端**才会在「技能」里出现。
-
-skill 只用通用字段（`name` / `description` / `whenToUse`），不用任何厂商私有扩展。
 
 ## 技术要点
 
@@ -208,6 +217,23 @@ paper2zh.cmd export --workdir "<产物目录>"           :: 事后补导（不�
 - 安装路径含中文时，程序会自动把推理库复制到 `%LOCALAPPDATA%\paper2zh\libs` 以兼容
 
 > 早期版本叫 `pdf2zh`，因与 [PDFMathTranslate](https://github.com/PDFMathTranslate/PDFMathTranslate) 的同名工具冲突而更名；旧链接会 301 到新仓库。
+
+## 项目背景
+
+这个项目起源于一个具体问题：让 AI 直接读英文论文 PDF，它往往会现场写一堆
+`pdfplumber` / `PyPDF2` / OCR 脚本，反复试错、烧掉大量 token，最后公式、图片、表格还容易坏。
+
+作者想做的不是「另一个 PDF 翻译器」，而是把这件事拆成两半：
+
+- **解析、回填、渲染、质检**交给确定性脚本（MinerU + 本项目）；
+- **翻译**交给 AI，因为这是它真正擅长的事。
+
+于是有了这个 skill：AI 拿到的不是「一个 PDF」，而是一份已经切好块、公式已经保护好的段落清单；
+它只负责翻译和判断，最终 Markdown 由 MinerU 官方渲染器生成。这样公式、图片、表格能逐字节保真，
+译文质量则取决于执行翻译的模型。
+
+目标用户很明确：**Windows 上不懂命令行的同事**——把仓库链接丢给 AI 安装，之后只跟 AI 说话。
+所以整个项目刻意没有 GUI、没有云服务、不装 torch、不要求管理员权限，也不要求用户会命令行。
 
 ## 许可
 
