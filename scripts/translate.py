@@ -20,6 +20,9 @@ import argparse
 import json
 import re
 import sys
+import time
+import urllib.error
+import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -307,11 +310,19 @@ def validate_unit(unit: dict, zh: str) -> list[str]:
                     f"第 {position + 1} 个字符起不同"
                 )
                 break
+    # 纯公式/符号/代码式段落（如 LayerNorm(x + Sublayer(x))）没有可译文字，允许原样交回；
+    # 用「含数学符号 + 没有连续两个英文单词」避免放过真正需要翻译的句子。
+    math_like = (
+        len(source) <= 120
+        and re.search(r"[=+*/^_{}\[\]<>]", source) is not None
+        and re.search(r"[A-Za-z]{2,}\s+[A-Za-z]{2,}", source) is None
+    )
     identifier_like = bool(IDENTIFIER_RE.match(source.strip()))
     email_like = bool(EMAIL_RE.search(source))
     if not CJK_RE.search(zh) and not (acronym_cell and zh == source.strip()) and not label_like \
             and not (identifier_like and zh == source.strip()) \
-            and not (email_like and (zh == source.strip() or EMAIL_RE.search(zh))):
+            and not (email_like and (zh == source.strip() or EMAIL_RE.search(zh))) \
+            and not math_like:
         problems.append("译文里没有任何中文")
     if "```" in zh or zh.startswith("#"):
         problems.append("译文里混进了 markdown 语法")
@@ -357,6 +368,174 @@ def read_translation_dir(directory: Path) -> dict[str, str]:
     return translations
 
 
+def _native_chat(base_url: str, model: str, system: str, user: str,
+                 temperature: float, max_tokens: int = 2048) -> tuple[str, dict]:
+    """调用 LM Studio 原生 /api/v1/chat（可关闭 thinking）。"""
+    url = base_url.rstrip("/") + "/api/v1/chat"
+    payload = {
+        "model": model,
+        "system_prompt": system,
+        "input": user,
+        "reasoning": "off",          # 只用原生接口才能可靠关掉 Qwen 的 thinking
+        "temperature": temperature,
+        "max_output_tokens": max_tokens,
+        "stream": False,
+    }
+    request = urllib.request.Request(
+        url, data=json.dumps(payload).encode("utf-8"),
+        headers={"Content-Type": "application/json"})
+    try:
+        with urllib.request.urlopen(request, timeout=300) as response:
+            data = json.loads(response.read().decode("utf-8"))
+    except urllib.error.HTTPError as exc:
+        detail = exc.read().decode("utf-8", "replace")[:200]
+        raise RuntimeError(f"HTTP {exc.code}: {detail}") from exc
+    except (urllib.error.URLError, TimeoutError, OSError) as exc:
+        raise RuntimeError(f"连不上本地模型：{exc}") from exc
+
+    parts = [item.get("content", "") for item in data.get("output", [])
+             if item.get("type") == "message"]
+    return "\n".join(parts).strip(), data.get("stats", {})
+
+
+def probe_local_services(base_url: str = "") -> list[dict]:
+    """探测本机正在运行的 LM Studio。只读，不加载任何模型。
+
+    只探测 LM Studio：`local` 后端目前只实现了它的原生 /api/v1/chat；
+    探测到 Ollama 等其它服务反而会误导 agent 去选一个跑不通的后端。
+    """
+    root_url = (base_url or "http://127.0.0.1:1234").rstrip("/")
+    found: list[dict] = []
+    try:
+        with urllib.request.urlopen(root_url + "/api/v1/models", timeout=3) as response:
+            data = json.loads(response.read().decode("utf-8"))
+    except (urllib.error.URLError, TimeoutError, OSError, json.JSONDecodeError):
+        return found
+
+    models = []
+    for item in data.get("models", []):
+        name = item.get("key") or item.get("id") or item.get("name")
+        if name:
+            models.append(str(name))
+    if models:
+        found.append({"api": "lmstudio", "base_url": root_url, "models": models})
+    return found
+
+
+def command_probe(base_url: str = "", json_out: bool = False) -> int:
+    services = probe_local_services(base_url)
+    if services:
+        for service in services:
+            paths.say(f"[本地] 检测到 {service['api']}（{service['base_url']}）："
+                      + "、".join(service["models"][:5]))
+    else:
+        paths.say("[本地] 没有检测到正在运行的 LM Studio / Ollama 服务。")
+    if json_out:
+        print(json.dumps({"found": bool(services), "services": services},
+                         ensure_ascii=False, indent=1))
+    return paths.EXIT_OK
+
+
+def command_local(workdir: Path, base_url: str, model: str, limit: int,
+                  temperature: float, json_out: bool = False,
+                  out_path: Path | None = None) -> int:
+    """逐段调用本地 LM Studio 模型翻译，不依赖 agent 的上下文。"""
+    paths.set_log_file(workdir / "run.log")
+    local_config: dict = {}
+    config_path = workdir / "local.json"
+    if config_path.is_file():
+        try:
+            local_config = json.loads(config_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            local_config = {}
+    base_url = (base_url or local_config.get("base_url") or "http://127.0.0.1:1234").rstrip("/")
+    model = (model or local_config.get("model") or "").strip()
+    if not model:
+        paths.fail(paths.EXIT_BAD_USAGE, "没有指定本地模型",
+                   "prepare 时加 --local-model \"qwen/qwen3.5-9b\"，或 local --model …")
+    if model and not config_path.is_file():
+        config_path.write_text(json.dumps(
+            {"api": "lmstudio", "base_url": base_url, "model": model},
+            ensure_ascii=False, indent=1), encoding="utf-8")
+    remember_model(workdir, model)
+
+    pending, glossary, _ = pending_units(workdir, model)
+    all_units = {unit["uid"]: unit for unit in flatten_units(load_chunks(workdir))}
+    batch = pending[:limit]
+    total = len(all_units)
+    done_count = total - len(pending)
+
+    if not batch:
+        paths.say("[本地] 没有待翻段落。")
+        return paths.EXIT_OK
+
+    paths.say(f"[本地] 模型 {model} @ {base_url}；本次 {len(batch)} 段，剩 {len(pending)} 段")
+    accepted: list[str] = []
+    rejected: list[tuple[str, str]] = []
+    started = time.time()
+
+    for index, row in enumerate(batch, start=1):
+        uid = row["uid"]
+        unit = all_units.get(uid, row)
+        source = str(unit.get("source", ""))
+        scoped = {term: value for term, value in glossary.items()
+                  if term.lower() in source.lower()}
+        note = "；".join(f"{term}→{value}" for term, value in list(scoped.items())[:40])
+        system = ("你是学术论文翻译。把用户给的英文原文翻成简体中文，只输出译文，不要解释、"
+                  "不要 markdown。原文里的 $...$ 是行内公式，必须原样保留，数量与顺序不变；"
+                  "若原文本身是公式或代码式内容，原样返回即可。")
+        if note:
+            system += f"\n术语对照（必须遵守）：{note}"
+
+        zh = ""
+        problems: list[str] = []
+        for attempt in range(1, 4):
+            user = source
+            if attempt > 1:
+                user += "\n\n上次译文不合格：" + "；".join(problems) + "\n请重译，只输出译文。"
+            try:
+                zh, stats = _native_chat(base_url, model, system, user, temperature)
+            except RuntimeError as exc:
+                problems = [str(exc)]
+                continue
+            problems = validate_unit(unit, zh)
+            if not problems:
+                break
+
+        if problems:
+            rejected.append((uid, "；".join(problems)))
+            paths.say(f"[本地] {index}/{len(batch)} {uid} 退回：{problems[0][:100]}")
+            continue
+
+        append_translations(workdir, [{
+            "uid": uid,
+            "zh": zh,
+            "hash": unit_hash(unit, glossary, model),
+            "model": model,
+            "glossary_sha256": glossary_sha(glossary),
+            "at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        }])
+        accepted.append(uid)
+        speed = float(stats.get("tokens_per_second") or 0)
+        paths.say(f"[本地] {index}/{len(batch)} {uid} ok（{speed:.0f} tok/s）")
+        paths.write_progress(workdir, "translate", "翻译", done_count + len(accepted), total,
+                             f"[翻译] 已翻 {done_count + len(accepted)}/{total} 段（本地模型）")
+
+    elapsed = time.time() - started
+    remaining = len(pending) - len(accepted)
+    paths.say(f"[本地] 完成：收下 {len(accepted)} 段，退回 {len(rejected)} 段，"
+              f"剩 {remaining} 段，用时 {elapsed:.1f}s")
+    summary = {"ok": not rejected, "accepted": len(accepted),
+               "rejected": [{"uid": uid, "reason": reason} for uid, reason in rejected],
+               "remaining": remaining, "model": model, "elapsed_sec": round(elapsed, 1)}
+    if out_path is not None:
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        out_path.write_text(json.dumps(summary, ensure_ascii=False, indent=1), encoding="utf-8")
+    if json_out:
+        print(json.dumps(summary, ensure_ascii=False, indent=1))
+    return paths.EXIT_OK if not rejected else paths.EXIT_QA_FAILED
+
+
 def command_apply(workdir: Path, file_path: Path, json_out: bool = False,
                   out_path: Path | None = None) -> int:
     paths.set_log_file(workdir / "run.log")
@@ -395,6 +574,10 @@ def command_apply(workdir: Path, file_path: Path, json_out: bool = False,
         paths.fail(paths.EXIT_BAD_USAGE, f"找不到译文文件 {file_path}",
                    "支持：`@@uid` 批文件、<uid>.txt 目录、JSON 文件。")
     model = str(payload.get("model") or "").strip() or resolve_model(workdir) or workdir.name
+    if model and not config_path.is_file():
+        config_path.write_text(json.dumps(
+            {"api": "lmstudio", "base_url": base_url, "model": model},
+            ensure_ascii=False, indent=1), encoding="utf-8")
     remember_model(workdir, model)
     translations = payload.get("translations")
     if not isinstance(translations, dict):

@@ -205,6 +205,14 @@ def prepare(args) -> int:
     workdir = paths.ensure_dir(paths.workdir_for(pdf))
     paths.set_log_file(workdir / "run.log")
     progress = Progress(workdir, "准备")
+    local_model = getattr(args, "local_model", "").strip()
+    if local_model:
+        config = {"api": "lmstudio",
+                  "base_url": getattr(args, "local_base_url", "http://127.0.0.1:1234"),
+                  "model": local_model}
+        (workdir / "local.json").write_text(
+            json.dumps(config, ensure_ascii=False, indent=1), encoding="utf-8")
+        progress.say(f"[准备] 本地翻译模型：{local_model} @ {config['base_url']}", force=True)
     progress.say(f"[准备] 开始处理：{pdf.name}", force=True)
 
     tier = args.tier
@@ -266,7 +274,11 @@ def prepare(args) -> int:
     progress.finish_stage("[分块] 完成")
     paths.write_progress(workdir, "ready", "就绪", 1, 1,
                          "[准备] 已完成，可以开始翻译（用 next 取段落）")
-    paths.say(f"[准备] 下一步：按 SKILL.md 翻译 {units_file.name}，用 `pdftozh.py next` 取段落。")
+    if local_model:
+        paths.say(f"[准备] 下一步：用 `pdftozh.py local --workdir \"<产物目录>\"` 逐段翻译"
+                  f"（本地模型 {local_model} 已记录在 local.json）。")
+    else:
+        paths.say(f"[准备] 下一步：按 SKILL.md 翻译 {units_file.name}，用 `pdftozh.py next` 取段落。")
     return paths.EXIT_OK
 
 
@@ -382,6 +394,10 @@ def main(argv: list[str]) -> int:
     prepare_parser.add_argument("pdf")
     prepare_parser.add_argument("--tier", default="auto", choices=["auto", "basic", "standard"])
     prepare_parser.add_argument("--pages", default=None, help="只解析部分页，例如 1-5")
+    prepare_parser.add_argument("--local-model", default="",
+                                help="记录本地翻译模型（LM Studio 模型 id），之后 local 不用再传")
+    prepare_parser.add_argument("--local-base-url", default="http://127.0.0.1:1234",
+                                help="LM Studio 地址（默认 1234）")
 
     next_parser = sub.add_parser("next", help="取出待翻段落")
     next_parser.add_argument("--workdir", required=True)
@@ -396,6 +412,18 @@ def main(argv: list[str]) -> int:
                               help="译文 JSON，或包含 <uid>.txt 的目录（免 JSON 转义）")
     apply_parser.add_argument("--json", action="store_true", help="把收卷结果打成 JSON")
     apply_parser.add_argument("--out", help="把收卷结果写成 UTF-8 JSON 文件")
+
+    local_parser = sub.add_parser("local", help="用本地 LM Studio 模型逐段翻译（绕开 agent 上下文）")
+    local_parser.add_argument("--workdir", default="")
+    local_parser.add_argument("--base-url", default="",
+                              help="默认读产物目录的 local.json，再回退 127.0.0.1:1234")
+    local_parser.add_argument("--model", default="", help="LM Studio 里的模型 id")
+    local_parser.add_argument("--limit", type=int, default=10)
+    local_parser.add_argument("--probe", action="store_true",
+                              help="只探测本机有没有在跑的本地模型服务")
+    local_parser.add_argument("--temperature", type=float, default=0.2)
+    local_parser.add_argument("--json", action="store_true")
+    local_parser.add_argument("--out", help="把结果写成 UTF-8 JSON 文件")
 
     finish_parser = sub.add_parser("finish", help="合并、渲染、质检")
     finish_parser.add_argument("--workdir", required=True)
@@ -443,6 +471,18 @@ def main(argv: list[str]) -> int:
         extra += (["--out", args.out] if getattr(args, "out", None) else [])
         return translate.main(["translate", "apply", "--workdir", args.workdir,
                                "--file", args.file] + extra)
+    if args.command == "local":
+        import translate
+        if getattr(args, "probe", False):
+            return translate.command_probe(args.base_url, args.json)
+        if not args.workdir:
+            paths.fail(paths.EXIT_BAD_USAGE, "local 需要 --workdir",
+                       "加 --workdir \"<产物目录>\"；只探测服务请用 local --probe。")
+        return translate.command_local(
+            Path(paths.clean_path(args.workdir)).expanduser().resolve(),
+            args.base_url, args.model, args.limit, args.temperature,
+            json_out=args.json,
+            out_path=Path(args.out).expanduser() if args.out else None)
     if args.command == "finish":
         return finish(args)
     if args.command == "status":

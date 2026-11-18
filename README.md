@@ -125,6 +125,19 @@ paper2zh 只负责解析、切块、回填和质检；**真正翻译的是你选
 
 > 一句话：**解析速度看你的电脑，翻译速度看你选的模型。**
 
+### 本地模型（可选）
+
+本机装了 LM Studio 的话，可以让脚本直连本地模型，不占 AI 的上下文：
+
+```cmd
+paper2zh.cmd prepare "论文.pdf" --local-model "qwen/qwen3.5-9b"
+paper2zh.cmd local --workdir "<产物目录>" --limit 20
+```
+
+`local` 会逐段调用 LM Studio 的本地接口（关闭 thinking），单段上下文约 500 token，
+8 GB 显存 / 8–16k 上下文也能跑；翻完照常 `finish`。
+想先看看本机有没有在跑：`paper2zh.cmd local --probe`。
+
 ## 支持的 agent
 
 | 工具 | 读取位置 |
