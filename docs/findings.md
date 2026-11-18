@@ -515,7 +515,7 @@ HEAD 快 ≠ 下载快。`bootstrap.py` 现在下载一小段真实索引页比�
 
 ### 9.3 中文安装路径会让 standard 档直接失效（重要）
 
-在 `C:\Users\<用户名>\Desktop\测试 目录\pdf2zh-lite` 下：
+在 `C:\Users\<用户名>\Desktop\测试 目录\paper2zh-lite` 下：
 
 | 档位 | 结果 |
 |---|---|
@@ -531,10 +531,10 @@ HEAD 快 ≠ 下载快。`bootstrap.py` 现在下载一小段真实索引页比�
 
 ### 9.4 其它安装期结论
 
-- `~\.claude\skills`、`~\.agents\skills` 装完后，DSH 的 skill 列表当场出现 `pdf2zh`，
+- `~\.claude\skills`、`~\.agents\skills` 装完后，DSH 的 skill 列表当场出现 `paper2zh`，
   说明「装进 AI 工具」这条路是真通的。
 - 嵌入式 Python 的 `._pth` 同时关掉了「脚本目录进 sys.path」，所有入口都要自己登记。
-- 轻包里 `skill\pdf2zh\scripts` 与开发态 `scripts` 两种布局并存，`paths.find_root()`
+- 轻包里 `skill\paper2zh\scripts` 与开发态 `scripts` 两种布局并存，`paths.find_root()`
   已按「环境变量 → 脚本相对位置 → 配置文件 → 常见路径」兜住。
 
 ### 9.5 中文路径问题：根因与修复（推翻 9.3 的「无解」结论）
@@ -557,13 +557,13 @@ basic 档只用 ONNX，不经这条路径，所以没事。
 
 1. `paths.ensure_ascii_libs(root)` 在安装路径含非 ASCII 字符时，把
    `site-packages\mineru_llama_cpp`（60 MB）复制到
-   `%LOCALAPPDATA%\pdf2zh\libs`，用源目录 mtime 做版本戳，避免每次重拷；
+   `%LOCALAPPDATA%\paper2zh\libs`，用源目录 mtime 做版本戳，避免每次重拷；
 2. 把这个英文目录写进 `python312._pth`，位置在 `../site-packages` **之前**，
    于是 import 走英文副本，DLL 路径也变英文；
 3. `pdftozh.py prepare`（standard 档）和 `doctor.py` 的路径检查会自动调用它；
 4. 不改档位、不静默降级；英文路径下这段逻辑直接跳过。
 
-实测：`C:\Users\<用户名>\Desktop\测试 目录\pdf2zh-lite` 下 fresh 运行
+实测：`C:\Users\<用户名>\Desktop\测试 目录\paper2zh-lite` 下 fresh 运行
 `prepare --tier standard` → 自动复制推理库、自动改 `._pth`、解析成功（3 页 / 78 段）。
 
 代价：中文路径的机器会多占约 60 MB（`%LOCALAPPDATA%`），换机器后重跑一次自检即可重建。

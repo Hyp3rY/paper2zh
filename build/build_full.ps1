@@ -17,8 +17,8 @@ param(
 $ErrorActionPreference = "Stop"
 $Root = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
 if (-not $OutDir) { $OutDir = Join-Path $Root "build\out" }
-$LiteName = "pdf2zh-v$Version-win-x64-lite"
-$FullName = "pdf2zh-v$Version-win-x64-full"
+$LiteName = "paper2zh-v$Version-win-x64-lite"
+$FullName = "paper2zh-v$Version-win-x64-full"
 $LiteStage = Join-Path $OutDir $LiteName
 $Stage = Join-Path $OutDir $FullName
 $Zip = Join-Path $OutDir "$FullName.zip"

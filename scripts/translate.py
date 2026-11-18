@@ -224,7 +224,7 @@ def command_next(workdir: Path, limit: int, model: str, as_json: bool, out: Path
             out.write_text(text, encoding="utf-8")
             paths.say(f"[翻译] 已写出 {out}")
         else:
-            # 交付给 agent 时保证 stdout 只有 JSON（.cmd 的 pause 由 PDF2ZH_NO_PAUSE 关掉）
+            # 交付给 agent 时保证 stdout 只有 JSON（.cmd 的 pause 由 PAPER2ZH_NO_PAUSE 关掉）
             print(text)
         return paths.EXIT_OK
 

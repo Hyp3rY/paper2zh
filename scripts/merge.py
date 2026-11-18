@@ -216,12 +216,12 @@ def refresh_readme(workdir: Path) -> None:
 
 怎么再翻一篇
 ------------
-在 AI 对话框里输入 /pdf2zh，再接一句要求（这样能确定用的是本技能）：
+在 AI 对话框里输入 /paper2zh，再接一句要求（这样能确定用的是本技能）：
 
-  /pdf2zh 把 D:\\论文\\xxx.pdf 翻成中文
+  /paper2zh 把 D:\\论文\\xxx.pdf 翻成中文
 
 AI 回复「正在本地解析」就说明技能已加载。
-输入 /pdf2zh 没反应：回到安装目录双击「3-装进AI工具.cmd」，再重启 AI 客户端。
+输入 /paper2zh 没反应：回到安装目录双击「3-装进AI工具.cmd」，再重启 AI 客户端。
 
 这些地方可能有问题
 ------------------
@@ -279,8 +279,8 @@ def main(argv: list[str]) -> int:
         paths.say(f"[合并] 去掉重复页眉/页脚 {dropped_headers} 处")
 
     import os
-    grid_enabled = os.environ.get("PDF2ZH_FIGURE_GRID", "").strip() not in ("0", "false", "no")
-    stitch_enabled = os.environ.get("PDF2ZH_STITCH", "").strip() not in ("0", "false", "no")
+    grid_enabled = os.environ.get("PAPER2ZH_FIGURE_GRID", "").strip() not in ("0", "false", "no")
+    stitch_enabled = os.environ.get("PAPER2ZH_STITCH", "").strip() not in ("0", "false", "no")
     source_texts: dict[tuple[int, int], str] = {}
     if stitch_enabled:
         reference_model = middle.load_middle(middle_path)
@@ -331,7 +331,7 @@ def main(argv: list[str]) -> int:
     refresh_readme(workdir)
 
     if merged_zh:
-        paths.say(f"[合并] 跨块断句：接回 {merged_zh} 处（PDF2ZH_STITCH=0 可关）")
+        paths.say(f"[合并] 跨块断句：接回 {merged_zh} 处（PAPER2ZH_STITCH=0 可关）")
     if grid_stats.get("groups"):
         paths.say(f"[合并] 多子图排版：{grid_stats['groups']} 组 / {grid_stats['cells']} 张子图已按原版面合成表格")
     paths.say(f"[合并] zh.md：{len(zh_md)} 字符")

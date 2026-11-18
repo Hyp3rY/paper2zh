@@ -15,7 +15,7 @@ param(
 $ErrorActionPreference = "Stop"
 $Root = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
 if (-not $OutDir) { $OutDir = Join-Path $Root "build\out" }
-$Name = "pdf2zh-v$Version-win-x64-lite"
+$Name = "paper2zh-v$Version-win-x64-lite"
 $Stage = Join-Path $OutDir $Name
 
 function Assert-File([string]$Path, [string]$Hint) {
@@ -56,7 +56,7 @@ Get-ChildItem (Join-Path $RuntimeDir "python") -Recurse -Directory -Filter "__py
     Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
 
 Write-Host "[build] 复制 skill 源码…"
-$SkillDir = Join-Path $Stage "skill\pdf2zh"
+$SkillDir = Join-Path $Stage "skill\paper2zh"
 New-Item -ItemType Directory -Force -Path (Join-Path $SkillDir "scripts") | Out-Null
 New-Item -ItemType Directory -Force -Path (Join-Path $SkillDir "references") | Out-Null
 Copy-Item (Join-Path $Root "SKILL.md") (Join-Path $SkillDir "SKILL.md") -Force
@@ -66,7 +66,7 @@ Get-ChildItem (Join-Path $SkillDir "scripts") -Recurse -Directory -Filter "__pyc
     Remove-Item -Recurse -Force
 
 Write-Host "[build] 复制启动器与文档…"
-foreach ($file in @("1-开始安装.cmd", "2-检查一下.cmd", "3-装进AI工具.cmd", "翻译.cmd", "pdf2zh.cmd",
+foreach ($file in @("1-开始安装.cmd", "2-检查一下.cmd", "3-装进AI工具.cmd", "翻译.cmd", "paper2zh.cmd",
                     "requirements.lock", "LICENSE", "THIRD_PARTY_NOTICES.md", "MANIFEST.json")) {
     Copy-Item (Join-Path $Root $file) (Join-Path $Stage $file) -Force
 }
@@ -81,7 +81,7 @@ Copy-Item (Join-Path $Root "samples\one-page.pdf") (Join-Path $Stage "samples\on
 # ---------------------------------------------------------------- 元数据
 $sha = (Get-FileHash (Join-Path $Root "requirements.lock") -Algorithm SHA256).Hash.ToLower()
 $manifest = [ordered]@{
-    bundle = "pdf2zh"
+    bundle = "paper2zh"
     bundle_version = $Version
     platform = "win-x64"
     python = "3.12.10"

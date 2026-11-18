@@ -18,7 +18,7 @@ from reportlab.pdfgen import canvas
 
 TEXT = [
     ("Helvetica-Bold", 16, "Attention Improves Small Translation Models"),
-    ("Helvetica-Oblique", 10, "A one-page warm-up sample generated for the pdf2zh self-check"),
+    ("Helvetica-Oblique", 10, "A one-page warm-up sample generated for the paper2zh self-check"),
     ("Helvetica", 10, ""),
     ("Helvetica", 10,
      "Recurrent networks process tokens one step at a time. Given a hidden state h_t, the model "

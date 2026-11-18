@@ -1,10 +1,10 @@
 ---
-name: pdf2zh
+name: paper2zh
 description: 把英文论文 PDF 转成中文 Markdown（公式、图片、表格原位保留）。本地 MinerU 解析 + 你亲自翻译，不联网调用任何云解析服务。当用户要求「把这篇 PDF 翻成中文」「英文论文转中文 Markdown」时使用。
 whenToUse: 用户给出英文论文 PDF 并要求中文版本、中文 Markdown、双语对照，或抱怨 AI 直接读 PDF 时反复写解析脚本烧 token。
 ---
 
-# pdf2zh：英文论文 PDF → 中文 Markdown
+# paper2zh：英文论文 PDF → 中文 Markdown
 
 ## 1. 什么时候用
 
@@ -17,52 +17,52 @@ whenToUse: 用户给出英文论文 PDF 并要求中文版本、中文 Markdown�
 
 ## 2. 唯一入口
 
-所有操作都通过包里的 **`pdf2zh.cmd`**（纯 ASCII 名，内部调用 `scripts/pdftozh.py`）。
-同一个包里有中文名 `翻译.cmd`，**两者完全等价**；给 agent 用时优先 `pdf2zh.cmd`
+所有操作都通过包里的 **`paper2zh.cmd`**（纯 ASCII 名，内部调用 `scripts/pdftozh.py`）。
+同一个包里有中文名 `翻译.cmd`，**两者完全等价**；给 agent 用时优先 `paper2zh.cmd`
 （Git Bash、`cmd //c`、路径编码不稳的工具里，中文 cmd 名容易打不开）。
 
 ```cmd
-pdf2zh.cmd prepare "D:\论文\paper.pdf"          :: 解析 + 切块，自动选档位
-pdf2zh.cmd next --workdir "<产物目录>" --limit 8 --json
-pdf2zh.cmd apply --workdir "<产物目录>" --file "<提交件>"
-pdf2zh.cmd finish --workdir "<产物目录>" [--docx] :: 回填 + 渲染 + 质检（--docx 顺带出 Word）
-pdf2zh.cmd status --workdir "<产物目录>"          :: 一行状态，随时可查
-pdf2zh.cmd export --workdir "<产物目录>"          :: 补出 Word（中文版 + 中英对照）
-pdf2zh.cmd where                                  :: 打印安装位置/脚本目录/解释器路径
+paper2zh.cmd prepare "D:\论文\paper.pdf"          :: 解析 + 切块，自动选档位
+paper2zh.cmd next --workdir "<产物目录>" --limit 8 --json
+paper2zh.cmd apply --workdir "<产物目录>" --file "<提交件>"
+paper2zh.cmd finish --workdir "<产物目录>" [--docx] :: 回填 + 渲染 + 质检（--docx 顺带出 Word）
+paper2zh.cmd status --workdir "<产物目录>"          :: 一行状态，随时可查
+paper2zh.cmd export --workdir "<产物目录>"          :: 补出 Word（中文版 + 中英对照）
+paper2zh.cmd where                                  :: 打印安装位置/脚本目录/解释器路径
 ```
 
 产物目录固定是 `<PDF 所在目录>\翻译结果\<文件名>\`，`prepare` 会打印出来。
 
-**找不到包时**：`%USERPROFILE%\.pdf2zh\config.json` 的 `root` 就是安装位置（由
-「3-装进AI工具.cmd」登记）；命令走 `pdf2zh.cmd`，不要自己去 `find`/`grep` 找脚本。
+**找不到包时**：`%USERPROFILE%\.paper2zh\config.json` 的 `root` 就是安装位置（由
+「3-装进AI工具.cmd」登记）；命令走 `paper2zh.cmd`，不要自己去 `find`/`grep` 找脚本。
 
 **如果工具不允许调用 `.cmd`**（安全模式 / 沙箱拦截 cmd.exe），直接调 Python，效果一样。
 脚本位置随安装形态不同，**不要照抄路径**：
 
-- 轻包安装：`<root>\skill\pdf2zh\scripts\pdftozh.py`
+- 轻包安装：`<root>\skill\paper2zh\scripts\pdftozh.py`
 - 源码 / 开发目录：`<root>\scripts\pdftozh.py`
 
-最稳的是读 `%USERPROFILE%\.pdf2zh\config.json` 里的 `scripts` 与 `python` 两个字段：
+最稳的是读 `%USERPROFILE%\.paper2zh\config.json` 里的 `scripts` 与 `python` 两个字段：
 
 ```powershell
-$cfg = Get-Content "$env:USERPROFILE\.pdf2zh\config.json" -Raw | ConvertFrom-Json
+$cfg = Get-Content "$env:USERPROFILE\.paper2zh\config.json" -Raw | ConvertFrom-Json
 & $cfg.python "$cfg.scripts\pdftozh.py" prepare "论文.pdf"
 ```
 
 旧版安装的 `config.json` 可能没有 `scripts` 字段（那时还没登记），那就按上面两种布局试，或者直接跑
-`pdf2zh.cmd where` 看实际值；
-`pdf2zh.cmd` 内部本来就会自己判断两种布局，所以能用它时就不要手写路径。
+`paper2zh.cmd where` 看实际值；
+`paper2zh.cmd` 内部本来就会自己判断两种布局，所以能用它时就不要手写路径。
 
 **带子命令调用时不会 `pause`**（只有双击、没有参数时才停），所以管道读 JSON 不需要额外环境变量；
 输出被重定向时优先用 `next --json --out units.json`，直接拿 UTF-8 文件。
 
-`status --json` 可拿到机器可读进度；`pdf2zh.cmd` 会把 Python 的退出码原样透传，
+`status --json` 可拿到机器可读进度；`paper2zh.cmd` 会把 Python 的退出码原样透传，
 质检不过就是 6，可以直接用退出码判断。
 
 ## 3. 绝对禁止
 
 1. **不许自己写解析脚本**。不要 `pip install pdfplumber`、不要 PyMuPDF、不要 OCR、不要自己正则抽文本。看到 PDF 就想动手写脚本是本 skill 要解决的问题本身。
-2. **不许调用云服务**：MinerU 云 API、pdf2zh 在线版、任何远程解析接口都不行。全部本地。
+2. **不许调用云服务**：MinerU 云 API、paper2zh 在线版、任何远程解析接口都不行。全部本地。
 3. **不许改 MinerU 源码、不许改 `runtime\site-packages` 里的文件**。
 4. **不许静默降级**：解析失败就报错给用户，不要偷偷换成更差的档位或换解析器。
 5. **不许动公式块**：`equation` 块的 LaTeX 一个字节都不能改（有些公式只有图片兜底，改了就变成空白）。行内公式只能原样照抄 `$...$`。
@@ -79,13 +79,13 @@ X 按页数估：有独显约 **2 秒/页**，无独显约 **7 秒/页**，再�
 ### 4.2 解析（后台执行 + 盯进度）
 
 ```cmd
-pdf2zh.cmd prepare "论文.pdf"
+paper2zh.cmd prepare "论文.pdf"
 ```
 
 这一步会跑几分钟。**用后台方式执行**，然后每 20–30 秒：
 
 ```cmd
-pdf2zh.cmd status --workdir "<产物目录>"
+paper2zh.cmd status --workdir "<产物目录>"
 ```
 
 - 只在**阶段变化、异常、完成**时对用户说话，不要每 10 秒刷一句。
@@ -104,7 +104,7 @@ pdf2zh.cmd status --workdir "<产物目录>"
 **抽术语用现成命令，别自己写脚本**：
 
 ```cmd
-pdf2zh.cmd terms --workdir "<产物目录>" --top 80 --out "<产物目录>\terms.csv"
+paper2zh.cmd terms --workdir "<产物目录>" --top 80 --out "<产物目录>\terms.csv"
 ```
 
 输出 `en,count,pages`（出现次数、出现段数），按段数排序。注意「不许自己写 PDF 解析脚本」
@@ -136,7 +136,7 @@ encoder,编码器
 ### 4.4 逐块翻译
 
 ```cmd
-pdf2zh.cmd next --workdir "<产物目录>" --limit 8 --json
+paper2zh.cmd next --workdir "<产物目录>" --limit 8 --json
 ```
 
 返回 JSON：`units[]` 里每段有 `uid`、`source`、`kind`，以及两个断句标记：
@@ -178,7 +178,7 @@ Bacchini 等 [18] 则关注「升力与巡航」式 eVTOL 飞行器……
 ```
 
 ```cmd
-pdf2zh.cmd apply --workdir "<产物目录>" --file "批文件.txt" --out "<产物目录>\apply.json"
+paper2zh.cmd apply --workdir "<产物目录>" --file "批文件.txt" --out "<产物目录>\apply.json"
 ```
 
 引号、反斜杠、`$...$` 全部原样写，不用管转义；`@@` 后面必须是 `next` 返回的 uid。
@@ -186,7 +186,7 @@ pdf2zh.cmd apply --workdir "<产物目录>" --file "批文件.txt" --out "<产�
 **方式 B：`<uid>.txt` 目录** —— 一段一个文件，同样免转义，但调用次数多
 
 ```cmd
-pdf2zh.cmd apply --workdir "<产物目录>" --file "译文目录"
+paper2zh.cmd apply --workdir "<产物目录>" --file "译文目录"
 ```
 
 **方式 C：JSON** —— 只在程序生成时用
@@ -207,19 +207,19 @@ JSON 里 **LaTeX 反斜杠要写成 `\\`，中文里的英文双引号 `"` 也�
 ### 4.5 出稿 + 质检
 
 ```cmd
-pdf2zh.cmd finish --workdir "<产物目录>"
+paper2zh.cmd finish --workdir "<产物目录>"
 ```
 
 产出：`zh.md`（纯中文）、`bilingual.md`（段落英中交替）、`qa.json`、`先读我.txt`；
 加 `--docx` 会多出两份 Word：`zh.docx` 与 `bilingual.docx`（公式转 OMML、图片内嵌，可直接编辑）。
-事后想补，用 `pdf2zh.cmd export --workdir "<产物目录>"`，不必重新质检。
+事后想补，用 `paper2zh.cmd export --workdir "<产物目录>"`，不必重新质检。
 
 **屏幕输出可能乱码**（IDE / 工具进程捕获时常见）：以 `<产物目录>\run.log` 为准，
 或者用机器可读出口：
 
 ```cmd
-pdf2zh.cmd apply  --workdir "<产物目录>" --file "<提交件>" --out "<产物目录>\apply.json"
-pdf2zh.cmd finish --workdir "<产物目录>" --out "<产物目录>\finish.json"
+paper2zh.cmd apply  --workdir "<产物目录>" --file "<提交件>" --out "<产物目录>\apply.json"
+paper2zh.cmd finish --workdir "<产物目录>" --out "<产物目录>\finish.json"
 ```
 
 两个文件都是 UTF-8，分别给出收卷结果（accepted / rejected+原因 / remaining）
@@ -249,7 +249,7 @@ pdf2zh.cmd finish --workdir "<产物目录>" --out "<产物目录>\finish.json"
 
 > 需要的话我顺手导出 Word（中文版 / 中英对照），不需要就这样。
 
-- 用户说要，就跑 `pdf2zh.cmd export --workdir "<产物目录>"`（约 1 秒，不重新翻译）；
+- 用户说要，就跑 `paper2zh.cmd export --workdir "<产物目录>"`（约 1 秒，不重新翻译）；
 - 用户一开始就说了要 Word，或者明确说不要，就不要再问；
 - 默认不生成 Word，避免产物目录里多出用不到的两三 MB。
 
@@ -298,7 +298,7 @@ pdf2zh.cmd finish --workdir "<产物目录>" --out "<产物目录>\finish.json"
 - 超长单段（>2000 字）不拆分，整段交给模型翻译；每段实际耗时约 1–2 秒，长段落更久。
 - 表格单元格可能被下标/公式切成碎片（`C_T,min` 会拆成两三个单元），这是解析结果，翻译时按片段处理即可。
 - 目录、列表、图注、表注都会翻；参考文献与代码块保留原文。
-- 双语版会把「上一段没写完、下一段接着写」的块接回成一段（`PDF2ZH_STITCH=0` 可关）；
+- 双语版会把「上一段没写完、下一段接着写」的块接回成一段（`PAPER2ZH_STITCH=0` 可关）；
   质检比对的是**接回之前**的中间文件，所以接回不会引起公式假阳性。
 - 每页重复的页眉/页脚（如 `Accepted Version of:`）会被自动去掉，不再重复翻译、也不进成品。
 - 参考文献块（`ref_text`）自始不参与翻译，也不会被要求「必须含中文」。
@@ -308,6 +308,6 @@ pdf2zh.cmd finish --workdir "<产物目录>" --out "<产物目录>\finish.json"
 - 双语版里，行内公式在每段中英各出现一次；行间公式、图片、表格只出现一次。
 - 图片按原文版面比例写成 `<img width=…>`（半栏图约 240px），不会把半栏图放大成整屏；
 - 多子图（`(a)`、`(b)`…）会按原版面合成为 HTML 表格，不会排成一列；
-  关掉用 `PDF2ZH_FIGURE_GRID=0`；
-  需要纯 Markdown 语法时设 `PDF2ZH_PLAIN_IMAGES=1` 重新 `finish`。
+  关掉用 `PAPER2ZH_FIGURE_GRID=0`；
+  需要纯 Markdown 语法时设 `PAPER2ZH_PLAIN_IMAGES=1` 重新 `finish`。
 - 大段长文翻译时，`bilingual.md` 会比 `zh.md` 大 2–3 倍。

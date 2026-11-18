@@ -47,8 +47,8 @@ class Report:
 
 
 def check_bundle(root: Path, report: Report) -> None:
-    # 发行态脚本在 skill\pdf2zh\scripts，开发态在 scripts
-    scripts_ok = (root / "scripts").is_dir() or (root / "skill" / "pdf2zh" / "scripts").is_dir()
+    # 发行态脚本在 skill\paper2zh\scripts，开发态在 scripts
+    scripts_ok = (root / "scripts").is_dir() or (root / "skill" / "paper2zh" / "scripts").is_dir()
     missing = [name for name in ("runtime", "MANIFEST.json") if not (root / name).exists()]
     if not scripts_ok:
         missing.append("scripts")
@@ -73,7 +73,7 @@ def check_skill_copies(root: Path, report: Report) -> None:
     实测踩过：两份代码会漂移（bundle 有重试与报错原文，agent 目录还是旧版），
     排障时 grep 错了副本，行为与代码完全对不上。
     """
-    bundled = root / "skill" / "pdf2zh" / "SKILL.md"
+    bundled = root / "skill" / "paper2zh" / "SKILL.md"
     if not bundled.is_file():
         bundled = root / "SKILL.md"
     if not bundled.is_file():
@@ -85,10 +85,10 @@ def check_skill_copies(root: Path, report: Report) -> None:
 
     base = digest(bundled)
     copies = [
-        Path.home() / ".agents" / "skills" / "pdf2zh" / "SKILL.md",
-        Path.home() / ".claude" / "skills" / "pdf2zh" / "SKILL.md",
-        Path.home() / ".workbuddy" / "skills" / "pdf2zh" / "SKILL.md",
-        Path.home() / ".workbuddy-ai" / "skills" / "pdf2zh" / "SKILL.md",
+        Path.home() / ".agents" / "skills" / "paper2zh" / "SKILL.md",
+        Path.home() / ".claude" / "skills" / "paper2zh" / "SKILL.md",
+        Path.home() / ".workbuddy" / "skills" / "paper2zh" / "SKILL.md",
+        Path.home() / ".workbuddy-ai" / "skills" / "paper2zh" / "SKILL.md",
     ]
     stale = [str(path.parent.parent) for path in copies if path.is_file() and digest(path) != base]
     if stale:
@@ -190,7 +190,7 @@ def check_path(root: Path, report: Report) -> None:
                        "推理库已复制到纯英文目录，standard 档可用；换机器后重跑一次自检即可。")
         else:
             report.add("安装路径", MARK_WARN, f"路径里有{'和'.join(problems)}",
-                       "建议把整个文件夹挪到纯英文路径（例如 D:\\Tools\\pdf2zh）。")
+                       "建议把整个文件夹挪到纯英文路径（例如 D:\\Tools\\paper2zh）。")
     else:
         report.add("安装路径", MARK_OK, "纯英文、无空格")
 

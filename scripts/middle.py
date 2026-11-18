@@ -140,12 +140,12 @@ def make_image_renderer():
     """返回给 MarkdownRenderOptions 的图片回调。
 
     默认输出 `<img width=…>`：宽度按块 bbox 的页宽占比折算，和 PDF 里看到的比例一致。
-    预览器不会再把一张半栏图放大成整屏。设 PDF2ZH_PLAIN_IMAGES=1 可退回 `![](...)`。
+    预览器不会再把一张半栏图放大成整屏。设 PAPER2ZH_PLAIN_IMAGES=1 可退回 `![](...)`。
     """
     import html as _html
     import os
 
-    plain = os.environ.get("PDF2ZH_PLAIN_IMAGES", "").strip() not in ("", "0", "false")
+    plain = os.environ.get("PAPER2ZH_PLAIN_IMAGES", "").strip() not in ("", "0", "false")
 
     def renderer(block: Any) -> str:
         source = _image_source(block)

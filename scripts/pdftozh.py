@@ -211,7 +211,7 @@ def prepare(args) -> int:
     if tier == "auto":
         tier = hardware_tier(root)
     # 安装路径含中文时，推理库（mineru_llama_cpp）会因窄字符 API 加载失败。
-    # 处理：把它复制到 %LOCALAPPDATA%\pdf2zh\libs 并登记进 ._pth，让子进程优先从
+    # 处理：把它复制到 %LOCALAPPDATA%\paper2zh\libs 并登记进 ._pth，让子进程优先从
     # 英文目录加载。这一步不降档、不静默，失败会明确报错。
     if tier == "standard" and not paths.is_ascii_path(root):
         note = paths.ensure_ascii_libs(root)
@@ -488,7 +488,7 @@ def main(argv: list[str]) -> int:
     if args.command == "doctor":
         return doctor(args)
     if args.command == "version":
-        paths.say("pdf2zh 1.0.0（本项目 1.0.0；MinerU 4.2.x）")
+        paths.say("paper2zh 1.0.0（本项目 1.0.0；MinerU 4.2.x）")
         return paths.EXIT_OK
     parser.print_help()
     return paths.EXIT_OK

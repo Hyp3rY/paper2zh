@@ -2,13 +2,13 @@
 """包定位、运行时路径与统一退出码。
 
 安装路径不固定（提示词 4.9），查找顺序：
-    1. 环境变量 PDF2ZH_HOME
-    2. %USERPROFILE%\\.pdf2zh\\config.json 的 root
-    3. 常见路径兜底（C:\\Tools\\pdf2zh、D:\\Tools\\pdf2zh）
+    1. 环境变量 PAPER2ZH_HOME
+    2. %USERPROFILE%\\.paper2zh\\config.json 的 root
+    3. 常见路径兜底（C:\\Tools\\paper2zh、D:\\Tools\\paper2zh）
     4. 都没有 → 退出码 2，提示重新运行「3-装进AI工具.cmd」
 
 开发态（源码仓库）和发行态（轻包）目录不同，这里统一抹平：
-    发行态：<root>\\skill\\pdf2zh\\scripts\\*.py、<root>\\runtime\\python\\python.exe
+    发行态：<root>\\skill\\paper2zh\\scripts\\*.py、<root>\\runtime\\python\\python.exe
     开发态：<root>\\scripts\\*.py、<root>\\runtime\\python\\python.exe
 """
 
@@ -52,9 +52,9 @@ EXIT_MEANING = {
 
 MINERU_SPEC = ">=4.2,<5"
 
-CFG_DIR = Path.home() / ".pdf2zh"
+CFG_DIR = Path.home() / ".paper2zh"
 CFG_FILE = CFG_DIR / "config.json"
-FALLBACK_ROOTS = [Path(r"C:\Tools\pdf2zh"), Path(r"D:\Tools\pdf2zh")]
+FALLBACK_ROOTS = [Path(r"C:\Tools\paper2zh"), Path(r"D:\Tools\paper2zh")]
 
 
 _LOG_PATH: "Path | None" = None
@@ -148,7 +148,7 @@ def _root_is_valid(root: Path) -> bool:
 
 
 def _root_from_script() -> Path | None:
-    """脚本自己往上找：<root>\\scripts 或 <root>\\skill\\pdf2zh\\scripts 都能命中。"""
+    """脚本自己往上找：<root>\\scripts 或 <root>\\skill\\paper2zh\\scripts 都能命中。"""
     current = Path(__file__).resolve().parent
     for _ in range(4):
         if _root_is_valid(current):
@@ -165,10 +165,10 @@ def find_root() -> Path:
     """
     tried: list[str] = []
 
-    env_root = os.environ.get("PDF2ZH_HOME")
+    env_root = os.environ.get("PAPER2ZH_HOME")
     if env_root:
         candidate = Path(env_root).expanduser()
-        tried.append(f"环境变量 PDF2ZH_HOME={candidate}")
+        tried.append(f"环境变量 PAPER2ZH_HOME={candidate}")
         if _root_is_valid(candidate):
             return candidate.resolve()
 
@@ -271,13 +271,13 @@ def workdir_for(pdf: Path) -> Path:
 def parse_tempdir(pdf: Path) -> Path:
     """MinerU 的输出先落到短路径临时目录，避免「stem 出现两次」撑爆 260。
 
-    C:\\Users\\…\\Temp\\pdf2zh-parse\\<hash8>\\ 约 40 字符，给文件名留足余量。
+    C:\\Users\\…\\Temp\\paper2zh-parse\\<hash8>\\ 约 40 字符，给文件名留足余量。
     """
     import tempfile
     import hashlib
 
     digest = hashlib.sha256(str(pdf.resolve()).lower().encode("utf-8")).hexdigest()[:8]
-    return Path(tempfile.gettempdir()) / "pdf2zh-parse" / digest
+    return Path(tempfile.gettempdir()) / "paper2zh-parse" / digest
 
 
 def write_progress(workdir: Path, stage: str, stage_name: str,
@@ -334,7 +334,7 @@ def free_space_gb(path: Path) -> float:
 # 这里做两件事：把库复制过去、把目录写进 python312._pth。运行中的进程改 _pth 要
 # 下次启动才生效，但 MinerU 是子进程启动的，所以在 prepare 里先修再跑即可。
 
-ASCII_LIBS_VERSION_FILE = ".pdf2zh-libs-version"
+ASCII_LIBS_VERSION_FILE = ".paper2zh-libs-version"
 
 
 def is_ascii_path(path: Path) -> bool:
@@ -344,7 +344,7 @@ def is_ascii_path(path: Path) -> bool:
 def ascii_libs_dir() -> Path:
     """纯英文的推理库目录（放 %LOCALAPPDATA%，与安装位置无关）。"""
     base = os.environ.get("LOCALAPPDATA") or str(Path.home() / "AppData" / "Local")
-    return Path(base) / "pdf2zh" / "libs"
+    return Path(base) / "paper2zh" / "libs"
 
 
 def _patch_pth(python_dir: Path, entry: str) -> bool:

@@ -2,11 +2,11 @@
 """把 skill 装进各 AI 工具的目录，并登记安装位置。
 
 用户双击「3-装进AI工具.cmd」触发。做四件事：
-  1. 装进通用目录 %USERPROFILE%\\.agents\\skills\\pdf2zh
+  1. 装进通用目录 %USERPROFILE%\\.agents\\skills\\paper2zh
      （DSH / Codex / Cursor / Gemini CLI 读这一个位置）
-  2. 装进 %USERPROFILE%\\.claude\\skills\\pdf2zh（Claude Code 读）
+  2. 装进 %USERPROFILE%\\.claude\\skills\\paper2zh（Claude Code 读）
   3. 检测到 WorkBuddy（国服/国际服）与豆包时，装进它们各自的 skills 目录
-  4. 把包根目录写进 %USERPROFILE%\\.pdf2zh\\config.json
+  4. 把包根目录写进 %USERPROFILE%\\.paper2zh\\config.json
 
 各工具的目录来自实机探测（2026-11），不是猜的：
   WorkBuddy 国服    ~/.workbuddy/skills        （域名 workbuddy.cn / codebuddy.cn）
@@ -47,8 +47,8 @@ DOUBAO_DATA = LOCAL_APP_DATA / "Doubao" / "User Data" / "Default" / ".doubao" / 
 
 
 def skill_root(root: Path) -> Path:
-    """发行态是 <root>\\skill\\pdf2zh，开发态是仓库根目录。"""
-    bundled = root / "skill" / "pdf2zh"
+    """发行态是 <root>\\skill\\paper2zh，开发态是仓库根目录。"""
+    bundled = root / "skill" / "paper2zh"
     return bundled if bundled.is_dir() else root
 
 
@@ -57,34 +57,34 @@ def detect_targets() -> list[dict]:
     candidates = [
         {
             "label": "通用目录（DSH / Codex / Cursor / Gemini CLI）",
-            "dir": HOME / ".agents" / "skills" / "pdf2zh",
+            "dir": HOME / ".agents" / "skills" / "paper2zh",
             "marker": HOME / ".agents",
             "always": True,
         },
         {
             "label": "Claude Code",
-            "dir": HOME / ".claude" / "skills" / "pdf2zh",
+            "dir": HOME / ".claude" / "skills" / "paper2zh",
             "marker": HOME / ".claude",
             "always": True,
         },
         {
             "label": "WorkBuddy 国服",
-            "dir": HOME / ".workbuddy" / "skills" / "pdf2zh",
+            "dir": HOME / ".workbuddy" / "skills" / "paper2zh",
             "marker": HOME / ".workbuddy",
         },
         {
             "label": "WorkBuddy 国际服",
-            "dir": HOME / ".workbuddy-ai" / "skills" / "pdf2zh",
+            "dir": HOME / ".workbuddy-ai" / "skills" / "paper2zh",
             "marker": HOME / ".workbuddy-ai",
         },
         {
             "label": "豆包（用户技能目录）",
-            "dir": DOUBAO_DATA / ".user_skills" / "pdf2zh",
+            "dir": DOUBAO_DATA / ".user_skills" / "paper2zh",
             "marker": DOUBAO_DATA,
         },
         {
             "label": "豆包（旧版 skills 目录）",
-            "dir": HOME / "Doubao" / "skills" / "pdf2zh",
+            "dir": HOME / "Doubao" / "skills" / "paper2zh",
             "marker": HOME / "Doubao" / "skills",
         },
     ]
@@ -116,7 +116,7 @@ def copy_skill(source: Path, target: Path, dry_run: bool) -> int:
 
 
 def pack_skill(source: Path, out: Path) -> int:
-    """打成一个能上传的 zip（压缩包内根目录就是 pdf2zh/SKILL.md）。"""
+    """打成一个能上传的 zip（压缩包内根目录就是 paper2zh/SKILL.md）。"""
     out.parent.mkdir(parents=True, exist_ok=True)
     count = 0
     with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as archive:
@@ -125,10 +125,10 @@ def pack_skill(source: Path, out: Path) -> int:
             if origin.is_dir():
                 for file in origin.rglob("*"):
                     if file.is_file() and "__pycache__" not in file.parts:
-                        archive.write(file, f"pdf2zh/{file.relative_to(source)}")
+                        archive.write(file, f"paper2zh/{file.relative_to(source)}")
                         count += 1
             elif origin.is_file():
-                archive.write(origin, f"pdf2zh/{origin.name}")
+                archive.write(origin, f"paper2zh/{origin.name}")
                 count += 1
     return count
 
@@ -139,7 +139,7 @@ def write_config(root: Path, installed: list[str], dry_run: bool) -> Path:
         return config_path
     config = {
         "root": str(root),
-        # 两种安装形态脚本位置不同（<root>\scripts 或 <root>\skill\pdf2zh\scripts），
+        # 两种安装形态脚本位置不同（<root>\scripts 或 <root>\skill\paper2zh\scripts），
         # 直接登记实际目录，agent 不必猜。
         "scripts": str(paths.scripts_dir()),
         "python": str(paths.python_exe(root)),
@@ -218,7 +218,7 @@ def main(argv: list[str]) -> int:
 
     print(f"\n  安装位置已登记：{config_path}")
     print("\n完成。现在可以对 AI 说：「把 D:\\论文\\xxx.pdf 翻成中文」。")
-    print("如果某个客户端里看不到 pdf2zh，重启客户端；仍看不到就用 --pack 生成技能包手动导入。")
+    print("如果某个客户端里看不到 paper2zh，重启客户端；仍看不到就用 --pack 生成技能包手动导入。")
     return paths.EXIT_OK
 
 
