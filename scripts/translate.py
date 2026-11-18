@@ -531,6 +531,10 @@ def command_local(workdir: Path, base_url: str, model: str, limit: int,
                   "若原文本身是公式或代码式内容，原样返回即可。")
         if note:
             system += f"\n术语对照（必须遵守）：{note}"
+        formulas = [str(item) for item in unit.get("formulas", [])]
+        if formulas:
+            system += ("\n原文包含以下公式，必须原样保留、数量与顺序不变："
+                       + "；".join(formulas[:20]))
 
         zh = ""
         problems: list[str] = []
@@ -619,10 +623,6 @@ def command_apply(workdir: Path, file_path: Path, json_out: bool = False,
         paths.fail(paths.EXIT_BAD_USAGE, f"找不到译文文件 {file_path}",
                    "支持：`@@uid` 批文件、<uid>.txt 目录、JSON 文件。")
     model = str(payload.get("model") or "").strip() or resolve_model(workdir) or workdir.name
-    if model and not config_path.is_file():
-        config_path.write_text(json.dumps(
-            {"api": "lmstudio", "base_url": base_url, "model": model},
-            ensure_ascii=False, indent=1), encoding="utf-8")
     remember_model(workdir, model)
     translations = payload.get("translations")
     if not isinstance(translations, dict):
