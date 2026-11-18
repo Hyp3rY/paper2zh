@@ -552,7 +552,7 @@ def main(argv: list[str]) -> int:
     if args.command == "doctor":
         return doctor(args)
     if args.command == "version":
-        paths.say("paper2zh 1.1.0（本项目 1.1.0；MinerU 4.2.x）")
+        paths.say("paper2zh 1.2.0（本项目 1.2.0；MinerU 4.2.x）")
         return paths.EXIT_OK
     parser.print_help()
     return paths.EXIT_OK

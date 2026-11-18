@@ -166,7 +166,7 @@ def write_config(root: Path, installed: list[str], dry_run: bool) -> Path:
         # 直接登记实际目录，agent 不必猜。
         "scripts": str(paths.scripts_dir()),
         "python": str(paths.python_exe(root)),
-        "bundle_version": "1.1.0",
+        "bundle_version": "1.2.0",
         "installed_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "skill_targets": installed,
     }
