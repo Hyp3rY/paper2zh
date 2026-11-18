@@ -221,7 +221,7 @@ def refresh_readme(workdir: Path) -> None:
   /paper2zh 把 D:\\论文\\xxx.pdf 翻成中文
 
 AI 回复「正在本地解析」就说明技能已加载。
-输入 /paper2zh 没反应：回到安装目录双击「3-装进AI工具.cmd」，再重启 AI 客户端。
+输入 /paper2zh 没反应：回到安装目录双击「1-开始安装.cmd」，再重启 AI 客户端。
 
 这些地方可能有问题
 ------------------

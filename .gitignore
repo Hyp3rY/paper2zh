@@ -17,6 +17,11 @@ __pycache__/
 .venv/
 .env
 
+# 安装过程日志
+安装进度.txt
+bootstrap.out.txt
+bootstrap.err.txt
+
 # 用户产物
 翻译结果/
 

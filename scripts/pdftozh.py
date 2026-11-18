@@ -7,7 +7,7 @@
     apply <file>         提交译文
     finish               回填 + 渲染 + 质检，出 zh.md / bilingual.md / qa.json
     status [目录]        一行状态，不阻塞、不启动新任务
-    doctor               自检（等同「2-检查一下.cmd」）
+    doctor               自检（等同「1-开始安装.cmd」的自检）
     version              版本信息
 
 设计原则（提示词第 11 节）：解析失败就报错，不许偷偷降档；产物只写进「翻译结果/」。
@@ -186,7 +186,7 @@ def run_parse(root: Path, pdf: Path, out_dir: Path, tier: str, pages: str | None
     paths.fail(
         paths.EXIT_PARSE_FAILED,
         f"MinerU 解析失败：{detail[:300]}",
-        "先跑「2-检查一下.cmd」确认模型完整；如果是中文路径下的怪问题，"
+        "先跑「1-开始安装.cmd」确认模型完整；如果是中文路径下的怪问题，"
         "把 PDF 复制到纯英文路径再试；仍失败请把这段报错发给维护者。",
     )
 
@@ -278,7 +278,7 @@ def finish(args) -> int:
     workdir = Path(paths.clean_path(args.workdir)).expanduser().resolve() if args.workdir else None
     if workdir is None:
         paths.fail(paths.EXIT_BAD_USAGE, "需要 --workdir 指定产物目录",
-                   "例如：翻译.cmd finish --workdir \"D:\\论文\\翻译结果\\attention\"。")
+                   "例如：paper2zh.cmd finish --workdir \"D:\\论文\\翻译结果\\attention\"。")
     paths.set_log_file(workdir / "run.log")
     progress = Progress(workdir, "合并")
     progress.say("[合并] 开始回填译文", force=True)
@@ -370,10 +370,10 @@ def main(argv: list[str]) -> int:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=(
             "常用：\n"
-            "  翻译.cmd prepare 论文.pdf      解析并分块\n"
-            "  翻译.cmd next --limit 10       取 10 段待翻\n"
-            "  翻译.cmd apply 译文.json       提交译文\n"
-            "  翻译.cmd finish --workdir …    出 zh.md 并质检\n"
+            "  paper2zh.cmd prepare 论文.pdf  解析并分块\n"
+            "  paper2zh.cmd next --limit 10   取 10 段待翻\n"
+            "  paper2zh.cmd apply 译文.json   提交译文\n"
+            "  paper2zh.cmd finish --workdir … 出 zh.md 并质检\n"
         ),
     )
     sub = parser.add_subparsers(dest="command")
@@ -424,7 +424,7 @@ def main(argv: list[str]) -> int:
     sub.add_parser("doctor", help="自检")
     sub.add_parser("version", help="版本信息")
 
-    # 拖动 PDF 到 翻译.cmd 上：参数就是一个 .pdf 路径，直接当 prepare
+    # 拖动 PDF 到 paper2zh.cmd 上：参数就是一个 .pdf 路径，直接当 prepare
     if len(argv) >= 2 and argv[1].lower().endswith(".pdf"):
         argv = [argv[0], "prepare", *argv[1:]]
 
@@ -488,7 +488,7 @@ def main(argv: list[str]) -> int:
     if args.command == "doctor":
         return doctor(args)
     if args.command == "version":
-        paths.say("paper2zh 1.0.0（本项目 1.0.0；MinerU 4.2.x）")
+        paths.say("paper2zh 1.1.0（本项目 1.1.0；MinerU 4.2.x）")
         return paths.EXIT_OK
     parser.print_help()
     return paths.EXIT_OK

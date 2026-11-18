@@ -1,13 +1,13 @@
 # 构建轻包（Windows）：runtime + skill + 启动器，约 50 MB。
 #
-#   pwsh -File build\build_light.ps1 [-Version 1.0.0] [-OutDir build\out] [-SkipZip]
+#   pwsh -File build\build_light.ps1 [-Version 1.1.0] [-OutDir build\out] [-SkipZip]
 #
 # 轻包里只有两样「大」东西：嵌入式 Python 与源码。模型和 site-packages 里的
 # 依赖不进来（site-packages 反而要进来——它才是依赖本体）；模型由
 # 「1-开始安装.cmd」在用户机器上下载。
 
 param(
-    [string]$Version = "1.0.0",
+    [string]$Version = "1.1.0",
     [string]$OutDir = "",
     [switch]$SkipZip
 )
@@ -66,8 +66,8 @@ Get-ChildItem (Join-Path $SkillDir "scripts") -Recurse -Directory -Filter "__pyc
     Remove-Item -Recurse -Force
 
 Write-Host "[build] 复制启动器与文档…"
-foreach ($file in @("1-开始安装.cmd", "2-检查一下.cmd", "3-装进AI工具.cmd", "翻译.cmd", "paper2zh.cmd",
-                    "requirements.lock", "LICENSE", "THIRD_PARTY_NOTICES.md", "MANIFEST.json")) {
+foreach ($file in @("1-开始安装.cmd", "paper2zh.cmd",
+                    "AI-INSTALL.md", "requirements.lock", "LICENSE", "THIRD_PARTY_NOTICES.md", "MANIFEST.json")) {
     Copy-Item (Join-Path $Root $file) (Join-Path $Stage $file) -Force
 }
 Copy-Item (Join-Path $Root "README-user.md") (Join-Path $Stage "先读我.txt") -Force

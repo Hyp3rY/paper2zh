@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """把 skill 装进各 AI 工具的目录，并登记安装位置。
 
-用户双击「3-装进AI工具.cmd」触发。做四件事：
+由「1-开始安装.cmd」自动调用。做四件事：
   1. 装进通用目录 %USERPROFILE%\\.agents\\skills\\paper2zh
      （DSH / Codex / Cursor / Gemini CLI 读这一个位置）
   2. 装进 %USERPROFILE%\\.claude\\skills\\paper2zh（Claude Code 读）
@@ -143,7 +143,7 @@ def write_config(root: Path, installed: list[str], dry_run: bool) -> Path:
         # 直接登记实际目录，agent 不必猜。
         "scripts": str(paths.scripts_dir()),
         "python": str(paths.python_exe(root)),
-        "bundle_version": "1.0.0",
+        "bundle_version": "1.1.0",
         "installed_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "skill_targets": installed,
     }

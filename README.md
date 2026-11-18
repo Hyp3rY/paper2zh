@@ -2,8 +2,7 @@
 
 把英文论文 PDF 变成中文 Markdown，**公式还是公式、图片还在原位、表格不散架**。
 
-给 Windows 上不懂命令行的人用：解压 → 双击「1-开始安装.cmd」→ 双击「3-装进AI工具.cmd」，
-之后只跟 AI 说话（Claude Code / Codex / Cursor / Gemini CLI / DSH 都行）。
+给 Windows 上不懂命令行的人用：解压 → 双击「1-开始安装.cmd」，之后只跟 AI 说话（Claude Code / Codex / Cursor / Gemini CLI / DSH 都行）。
 
 > **适用平台：Windows 10 / 11（x64）。** 本项目由 `.cmd` 启动器 + 嵌入式 Windows Python +
 > MinerU 的 Windows 基础包（DirectML / Vulkan）组成，**不支持 macOS 和 Linux**。
@@ -29,16 +28,19 @@
 目标用户很明确：**Windows 上不懂命令行的同事**——解压、双击两个 `.cmd`，之后只跟 AI 说话。
 所以整个项目刻意没有 GUI、没有云服务、不装 torch、不要求管理员权限，也不要求用户会命令行。
 
+> **想让 AI 帮你装？** 把 [AI-INSTALL.md](AI-INSTALL.md) 里的提示词整段发给它即可（需要能执行命令的 AI）。
+
 ## 下载
 
 到 [Releases](https://github.com/Hyp3rY/paper2zh/releases/latest) 下载：
 
-| 文件 | 大小 | 用于 |
+| 文件（文件名以实际 Release 为准） | 大小 | 用于 |
 |---|---|---|
-| `paper2zh-v1.0.0-win-x64-lite.zip` | 12.6 MB | **推荐**。自带嵌入式 Python 和全部源码，首次使用联网下载依赖与模型 |
-| 完整离线包 | 约 1.94 GB | 断网环境。体积大，放在 Release 说明的网盘链接里 |
+| `paper2zh-*-win-x64-lite.zip` | 约 13 MB | **推荐**。自带嵌入式 Python 和全部源码，首次使用联网下载依赖与模型 |
+| `paper2zh-*-win-x64-full.zip` | 约 1.9 GB | 断网环境。体积大，可能只放在 Release 说明的网盘里 |
 
-> 下载轻包后，直接看下一节「怎么装」。
+> 文件名里的 `*` 是版本号，**不用记**——到 [最新 Release](https://github.com/Hyp3rY/paper2zh/releases/latest)
+> 看当前版本即可。下载轻包后，直接看下一节「怎么装」。
 
 ## 建议配置与占用空间
 
@@ -65,14 +67,13 @@
 
 > 安装过程中 pip 还会占用 0.5–1 GB 缓存（`%LOCALAPPDATA%\pip\Cache`），装完可以删，不影响使用。
 
-## 怎么装（三步）
+## 怎么装（两步）
 
 1. 解压到一个找得到的位置（推荐纯英文路径，例如 `D:\Tools\paper2zh`）
-2. 双击 **`1-开始安装.cmd`**：下载依赖（约 0.8 GB）与模型（约 2 GB），断点续传
-3. 双击 **`3-装进AI工具.cmd`**：复制 skill 到 `~\.agents\skills\paper2zh` 与
-   `~\.claude\skills\paper2zh`，并登记安装位置
+2. 双击 **`1-开始安装.cmd`**：下载依赖（约 0.8 GB）与模型（约 2 GB），
+   自动装进 AI 工具并自检；第一次约 5–10 分钟，断点续传
 
-出问题双击 `2-检查一下.cmd`，它会用中文说清缺什么、该怎么办。
+出问题再双击一次 `1-开始安装.cmd`，它会跳过已完成的部分、重新检查并修复。
 
 ## 怎么用
 
@@ -92,8 +93,7 @@ qa.json          自动检查结果
 先读我.txt        这份文件的说明
 ```
 
-也可以直接拖 PDF 到 `翻译.cmd` 上（手动模式）。Git Bash / 英文终端里用纯 ASCII 的
-`paper2zh.cmd`，两者等价。
+给 agent / 终端用时统一走纯 ASCII 的 `paper2zh.cmd`；普通用户不需要命令，直接 `/paper2zh` 即可。
 
 ## 支持的 agent
 

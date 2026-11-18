@@ -8,7 +8,7 @@
   - 不写注册表、不改系统 PATH、不装服务、不请求管理员权限。
 
 用法：
-    python bootstrap.py [all|deps|models|verify] [--mirror cn|global]
+    python bootstrap.py [all|deps|models|verify|probe] [--mirror cn|global]
 """
 
 from __future__ import annotations
@@ -130,31 +130,38 @@ def probe_throughput(url: str, timeout: float = 20.0) -> tuple[int, float]:
         return 0, time.time() - started
 
 
-def choose_pip_index(mirror: str, console: Console) -> str:
-    """cn 模式按真实吞吐量选源；HEAD 快不代表下载快（阿里会限速）。"""
+def rank_pip_mirrors(mirror: str, console: Console) -> list[tuple[str, str, float]]:
+    """实测各镜像吞吐量并排序；HEAD 快不代表下载快（阿里会限速）。
+
+    返回 [(名称, 地址, KB/s), ...]，最快的在前，其余留作装依赖失败时的备选。
+    """
     candidates = PIP_MIRRORS["cn" if mirror == "cn" else "global"]
     scored: list[tuple[str, str, float]] = []
     for name, url in candidates:
         if not probe_network(url)[0]:
-            console.say(f"    探测 {name} 镜像… 不通", force=False)
+            console.say(f"    测速 {name}… 不通", force=False)
             continue
         size, elapsed = probe_throughput(f"{url.rstrip('/')}/pip/")
         if size == 0:
-            console.say(f"    探测 {name} 镜像… 不可用", force=False)
+            console.say(f"    测速 {name}… 无法测速", force=False)
             continue
         rate = size / max(elapsed, 0.05) / 1024
-        console.say(f"    探测 {name} 镜像… {rate:,.0f} KB/s", force=False)
+        console.say(f"    测速 {name}… {rate:,.0f} KB/s", force=False)
         scored.append((name, url, rate))
     if not scored:
         paths.fail(paths.EXIT_NETWORK, "连不上任何软件源。",
                    "检查网络（是否需要代理），然后重新双击「1-开始安装.cmd」。")
     scored.sort(key=lambda item: item[2], reverse=True)
-    name, url, rate = scored[0]
-    console.say(f"    使用{name}源（{rate:,.0f} KB/s）：{url}", force=False)
-    return url
+    best = scored[0]
+    if len(scored) > 1:
+        console.say(f"    选 {best[0]}（{best[2]:,.0f} KB/s），另 {len(scored) - 1} 个源备用",
+                    force=False)
+    else:
+        console.say(f"    选 {best[0]}（{best[2]:,.0f} KB/s）", force=False)
+    return scored
 
 
-def precheck(root: Path, console: Console, mirror: str) -> str:
+def precheck(root: Path, console: Console, mirror: str) -> list[tuple[str, str, float]]:
     console.say("[1/4] 检查磁盘与网络…")
     free = paths.free_space_gb(root)
     if free < MIN_FREE_GB:
@@ -162,14 +169,14 @@ def precheck(root: Path, console: Console, mirror: str) -> str:
                    "清理磁盘后再双击「1-开始安装.cmd」。")
     console.say(f"    磁盘可用 {free:.0f} GB，通过")
 
-    index_url = choose_pip_index(mirror, console)
+    mirrors = rank_pip_mirrors(mirror, console)
     if mirror == "cn":
         ok, elapsed = probe_network("https://www.modelscope.cn/")
         if not ok:
             paths.fail(paths.EXIT_NETWORK, "连不上模型站（ModelScope）。",
                        "换个网络或稍后再试；实在不行找同事要「完整离线包」。")
         console.say(f"    ModelScope 可用（{elapsed:.1f} 秒）")
-    return index_url
+    return mirrors
 
 
 # ---------------------------------------------------------------- 依赖
@@ -205,48 +212,60 @@ def bootstrap_pip(root: Path, console: Console) -> None:
     shutil.unpack_archive(str(root / "bootstrap" / "pip.zip"), str(target), "zip")
 
 
-def install_deps(root: Path, lock: Path, index_url: str, console: Console) -> None:
+def install_deps(root: Path, lock: Path, mirrors: list[tuple[str, str, float]],
+                 console: Console) -> None:
     console.say("[2/4] 安装依赖（首次约 1 GB，请耐心等）…")
     bootstrap_pip(root, console)
     python = paths.python_exe(root)
     target = paths.site_packages(root)
-    # 先补 setuptools/wheel：--no-build-isolation 要用它们构建 jieba
-    base_cmd = [str(python), "-m", "pip", "install", "--target", str(target),
-                "--no-warn-script-location", "--no-build-isolation",
-                "--disable-pip-version-check", "-i", index_url,
-                "--trusted-host", re.sub(r"^https?://([^/]+).*$", r"\1", index_url)]
-    subprocess.run(base_cmd + ["setuptools", "wheel"], capture_output=True, text=True, encoding="utf-8", errors="replace")
 
-    process = subprocess.Popen(
-        base_cmd + ["-r", str(lock)],
-        stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
-        encoding="utf-8", errors="replace",
-    )
-    assert process.stdout is not None
-    tail: list[str] = []
-    last_percent = -10
-    for line in process.stdout:
-        clean = line.strip()
-        if not clean:
-            continue
-        tail.append(clean)
-        tail = tail[-8:]
-        match = re.search(r"(\d{1,3})%", clean)
-        if match and int(match.group(1)) >= last_percent + 10:
-            last_percent = int(match.group(1))
-            console.say(f"    下载进度 {last_percent}%", force=False)
-        console.beat("仍在安装依赖，网络较慢，请耐心等待")
-    code = process.wait()
-    if code != 0:
-        detail = tail[-1] if tail else "未知错误"
-        paths.fail(paths.EXIT_DEPS_FAILED, f"依赖装不上：{detail[:200]}",
-                   "检查网络后重新双击「1-开始安装.cmd」；已下载的部分不会丢。")
+    def run_pip(index_url: str, extra: list[str], stream: bool) -> tuple[int, list[str]]:
+        command = [str(python), "-m", "pip", "install", "--target", str(target),
+                   "--no-warn-script-location", "--no-build-isolation",
+                   "--disable-pip-version-check", "-i", index_url,
+                   "--trusted-host", re.sub(r"^https?://([^/]+).*$", r"\1", index_url)]
+        if not stream:
+            done = subprocess.run(command + extra, capture_output=True, text=True,
+                                  encoding="utf-8", errors="replace")
+            return done.returncode, (done.stdout or "").splitlines()
+        process = subprocess.Popen(command + extra, stdout=subprocess.PIPE,
+                                   stderr=subprocess.STDOUT, text=True,
+                                   encoding="utf-8", errors="replace")
+        assert process.stdout is not None
+        tail: list[str] = []
+        last_percent = -10
+        for line in process.stdout:
+            clean = line.strip()
+            if not clean:
+                continue
+            tail.append(clean)
+            tail = tail[-8:]
+            match = re.search(r"(\d{1,3})%", clean)
+            if match and int(match.group(1)) >= last_percent + 10:
+                last_percent = int(match.group(1))
+                console.say(f"    下载进度 {last_percent}%", force=False)
+            console.beat("仍在安装依赖，网络较慢，请耐心等待")
+        return process.wait(), tail
 
-    (root / MARK_DEPS).write_text(sha256_file(lock), encoding="utf-8")
-    console.say("    依赖安装完成")
+    detail = "未知错误"
+    tried: list[str] = []
+    for attempt, (name, url, rate) in enumerate(mirrors, start=1):
+        if attempt > 1:
+            console.say(f"    换用{name}源重试（{rate:,.0f} KB/s）…")
+        tried.append(name)
+        # 先补 setuptools/wheel：--no-build-isolation 要用它们构建 jieba
+        run_pip(url, ["setuptools", "wheel"], stream=False)
+        code, tail = run_pip(url, ["-r", str(lock)], stream=True)
+        if code == 0:
+            (root / MARK_DEPS).write_text(sha256_file(lock), encoding="utf-8")
+            console.say("    依赖安装完成")
+            return
+        detail = tail[-1] if tail else detail
+        console.say(f"    {name}源失败：{detail[:120]}")
 
-
-# ---------------------------------------------------------------- 模型
+    paths.fail(paths.EXIT_DEPS_FAILED, f"依赖装不上：{detail[:200]}",
+               f"已试过 {'、'.join(tried)}。检查网络后重新双击「1-开始安装.cmd」；"
+               "已下载的部分不会丢。")
 
 
 def models_ready(root: Path) -> bool:
@@ -311,7 +330,7 @@ def warmup(root: Path, console: Console) -> None:
     code = process.wait()
     if code != 0:
         paths.fail(paths.EXIT_MODEL_MISSING, "预热失败，模型可能不完整。",
-                   "双击「2-检查一下.cmd」看具体哪里缺；或重跑安装。")
+                   "双击「1-开始安装.cmd」看具体哪里缺；或重跑安装。")
     (root / MARK_WARM).write_text("ok", encoding="utf-8")
     console.say("    预热完成")
 
@@ -334,8 +353,8 @@ def main(argv: list[str]) -> int:
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument("mode", nargs="?", default="all",
-                        choices=["all", "deps", "models", "verify"],
-                        help="all=全部；deps=只装依赖；models=只下模型；verify=只检查")
+                        choices=["all", "deps", "models", "verify", "probe"],
+                        help="all=全部；deps=只装依赖；models=只下模型；verify=只检查；probe=只测速")
     parser.add_argument("--mirror", default="cn", choices=["cn", "global"],
                         help="cn=国内镜像（默认）；global=海外用户走官方源")
     args = parser.parse_args(argv[1:])
@@ -354,17 +373,20 @@ def main(argv: list[str]) -> int:
         paths.fail(paths.EXIT_DEPS_FAILED, "安装包里缺少 requirements.lock。",
                    "重新解压一份安装包。")
 
-    if args.mode in ("all", "deps"):
-        index_url = precheck(root, console, args.mirror)
+    if args.mode in ("all", "deps", "probe"):
+        mirrors = precheck(root, console, args.mirror)
+        if args.mode == "probe":
+            console.say("\n测速完成；安装时会用最快的那个源，失败会自动换下一个。")
+            return paths.EXIT_OK
         if args.mode == "all":
             console.say("")
         if deps_ready(root, lock):
             console.say("[2/4] 依赖已经装好，跳过")
         else:
-            install_deps(root, lock, index_url, console)
+            install_deps(root, lock, mirrors, console)
         if args.mode == "deps":
             print_status(root)
-            console.say("\n依赖已就绪。下一步：双击「3-装进AI工具.cmd」。")
+            console.say("\n依赖已就绪。下一步：双击「1-开始安装.cmd」完成注册。")
             return paths.EXIT_OK
 
     if args.mode in ("all", "models"):
@@ -376,7 +398,7 @@ def main(argv: list[str]) -> int:
             warmup(root, console)
         if args.mode == "models":
             print_status(root)
-            console.say("\n模型已就绪。下一步：双击「3-装进AI工具.cmd」。")
+            console.say("\n模型已就绪。下一步：双击「1-开始安装.cmd」完成注册。")
             return paths.EXIT_OK
 
     if args.mode == "verify":
@@ -388,7 +410,7 @@ def main(argv: list[str]) -> int:
 
     print_status(root)
     print()
-    console.say("全部就绪。下一步：双击「3-装进AI工具.cmd」")
+    console.say("环境全部就绪。")
     return paths.EXIT_OK
 
 

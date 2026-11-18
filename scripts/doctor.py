@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """自检：9 项检查，全部用中文说人话，最后给一句「该怎么办」。
 
-对应「2-检查一下.cmd」。检查顺序（提示词 4.8）：
+对应「1-开始安装.cmd」的自检环节。检查顺序（提示词 4.8）：
   1 包完整性   2 Python 能否启动   3 依赖是否齐全   4 模型完整性
   5 磁盘空间   6 路径含中文/空格   7 杀软是否删了文件
   8 硬件档位   9 跑一页样例预热
@@ -93,7 +93,7 @@ def check_skill_copies(root: Path, report: Report) -> None:
     stale = [str(path.parent.parent) for path in copies if path.is_file() and digest(path) != base]
     if stale:
         report.add("skill 副本", MARK_WARN, f"{len(stale)} 处 agent 目录里是旧版",
-                   "重新双击「3-装进AI工具.cmd」同步；排障时以包内 skill 为准。")
+                   "重新双击「1-开始安装.cmd」同步；排障时以包内 skill 为准。")
     else:
         report.add("skill 副本", MARK_OK, "与包内版本一致")
 

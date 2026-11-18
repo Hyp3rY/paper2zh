@@ -5,7 +5,7 @@
     1. 环境变量 PAPER2ZH_HOME
     2. %USERPROFILE%\\.paper2zh\\config.json 的 root
     3. 常见路径兜底（C:\\Tools\\paper2zh、D:\\Tools\\paper2zh）
-    4. 都没有 → 退出码 2，提示重新运行「3-装进AI工具.cmd」
+    4. 都没有 → 退出码 2，提示重新运行「1-开始安装.cmd」
 
 开发态（源码仓库）和发行态（轻包）目录不同，这里统一抹平：
     发行态：<root>\\skill\\paper2zh\\scripts\\*.py、<root>\\runtime\\python\\python.exe
@@ -199,7 +199,7 @@ def find_root() -> Path:
     fail(
         EXIT_NO_BUNDLE,
         "找不到 PDF 转中文的安装包（Windows 上那套带 runtime 的文件夹）。",
-        "请重新双击包里的「3-装进AI工具.cmd」，它会重新登记安装位置；"
+        "请重新双击包里的「1-开始安装.cmd」，它会重新登记安装位置；"
         "如果包已经删了，请重新解压一份。",
     )
     raise AssertionError("unreachable")
@@ -214,7 +214,7 @@ def python_exe(root: Path) -> Path:
     exe = root / "runtime" / "python" / "python.exe"
     if not exe.is_file():
         fail(EXIT_NO_BUNDLE, "安装包里的 Python 不见了（可能被杀毒软件删了）。",
-             "双击「2-检查一下.cmd」看看具体缺了什么，或者重新解压一份安装包。")
+             "双击「1-开始安装.cmd」看看具体缺了什么，或者重新解压一份安装包。")
     return exe
 
 

@@ -18,8 +18,8 @@ whenToUse: 用户给出英文论文 PDF 并要求中文版本、中文 Markdown�
 ## 2. 唯一入口
 
 所有操作都通过包里的 **`paper2zh.cmd`**（纯 ASCII 名，内部调用 `scripts/pdftozh.py`）。
-同一个包里有中文名 `翻译.cmd`，**两者完全等价**；给 agent 用时优先 `paper2zh.cmd`
-（Git Bash、`cmd //c`、路径编码不稳的工具里，中文 cmd 名容易打不开）。
+给 agent 用时只用 `paper2zh.cmd`（Git Bash、`cmd //c`、路径编码不稳的工具里，
+中文文件名容易打不开）。
 
 ```cmd
 paper2zh.cmd prepare "D:\论文\paper.pdf"          :: 解析 + 切块，自动选档位
@@ -34,7 +34,7 @@ paper2zh.cmd where                                  :: 打印安装位置/脚本
 产物目录固定是 `<PDF 所在目录>\翻译结果\<文件名>\`，`prepare` 会打印出来。
 
 **找不到包时**：`%USERPROFILE%\.paper2zh\config.json` 的 `root` 就是安装位置（由
-「3-装进AI工具.cmd」登记）；命令走 `paper2zh.cmd`，不要自己去 `find`/`grep` 找脚本。
+「1-开始安装.cmd」登记）；命令走 `paper2zh.cmd`，不要自己去 `find`/`grep` 找脚本。
 
 **如果工具不允许调用 `.cmd`**（安全模式 / 沙箱拦截 cmd.exe），直接调 Python，效果一样。
 脚本位置随安装形态不同，**不要照抄路径**：
@@ -269,9 +269,9 @@ paper2zh.cmd finish --workdir "<产物目录>" --out "<产物目录>\finish.json
 
 | 码 | 含义 | 你该做什么 |
 |---|---|---|
-| 2 | 找不到安装包 | 让用户双击「3-装进AI工具.cmd」重新登记；不要自己 find/grep 找 |
+| 2 | 找不到安装包 | 让用户双击「1-开始安装.cmd」重新登记；不要自己 find/grep 找 |
 | 3 | 模型缺失或损坏 | 让用户双击「1-开始安装.cmd」补模型 |
-| 4 | 解析失败 | 先让用户跑「2-检查一下.cmd」；仍失败就换 PDF 或报维护者 |
+| 4 | 解析失败 | 先让用户双击「1-开始安装.cmd」（会自动自检）；仍失败就换 PDF 或报维护者 |
 | 5 | 磁盘/权限问题 | 让用户换到有写权限的目录，或清理磁盘 |
 | 6 | 质检未通过 | 按 `qa.json` 重翻对应段落，最多 2 轮，仍不过就向用户说明哪几段有问题 |
 | 7 | MinerU 版本不符 | 让用户重新解压安装包，不要自己 pip 升级 |
