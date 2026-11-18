@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from collections import Counter
 from datetime import datetime, timezone
@@ -142,31 +143,99 @@ STOPWORDS = {
 }
 
 
+def _singular(word: str) -> str:
+    """极简词形归并：只处理常见复数，够术语表用。"""
+    if word.endswith("ies") and len(word) > 4:
+        return word[:-3] + "y"
+    if word.endswith(("ches", "shes", "sses", "xes", "zes")):
+        return word[:-2]
+    if word.endswith("s") and not word.endswith(("ss", "us", "is")):
+        return word[:-1]
+    return word
+
+
+PHRASE_STOP = STOPWORDS | {
+    "the", "of", "and", "to", "in", "for", "with", "by", "on", "at", "as", "from",
+    "that", "this", "these", "those", "is", "are", "was", "were", "be", "been",
+    "being", "it", "its", "we", "our", "they", "their", "which", "who", "whom",
+    "whose", "or", "but", "not", "no", "if", "then", "than", "so", "such", "can",
+    "could", "may", "might", "will", "would", "should", "do", "does", "did",
+    "have", "has", "had", "also", "more", "most", "some", "any", "each", "both",
+    "other", "only", "very", "all", "one", "two", "three", "first", "second",
+    "new", "used", "use", "using", "based", "show", "shows", "shown", "study",
+    "paper", "result", "results", "method", "methods", "approach", "proposed",
+    "present", "figure", "fig", "table", "tab", "section", "eq", "equation",
+    "respectively", "however", "therefore", "thus", "obtained", "increase",
+    "decrease", "effect", "case", "time", "due", "after", "before", "during",
+    "between", "within", "under", "over", "about", "into", "through",
+}
+GENERIC_WORDS = {
+    "complete", "corresponding", "upper", "lower", "main", "four", "range",
+    "ranges", "whereas", "conditions", "condition", "calculations", "calculation",
+    "various", "different", "similar", "large", "small", "high", "low", "good",
+    "strong", "weak", "significant", "slightly", "approximately", "nearly",
+    "shown", "given", "following", "previous", "next", "total", "overall",
+}
+WORD_RE = re.compile(r"[A-Za-z][A-Za-z\-]{2,}")
+
+
 def extract_terms(workdir: Path, top: int = 80) -> list[dict]:
-    """从 chunks 里统计高频英文词，供人工/agent 组术语表。
+    """从 chunks 统计候选术语：短语优先、词形归并、过滤泛词。
 
-    只读 chunks.json，不碰 PDF——这正是「禁止自己写解析脚本」之外的合法助手。
+    只读 chunks.json，不碰 PDF——这是「禁止自己写解析脚本」之外的合法助手。
+    输出带 kind（phrase / word），建术语表时优先选 phrase。
     """
-    import re as _re
-
     chunks = json.loads((workdir / CHUNKS_FILE).read_text(encoding="utf-8"))
     units = [u for c in chunks.get("chunks", []) for u in c.get("units", [])]
-    total: dict[str, int] = {}
-    pages: dict[str, set] = {}
+
+    stats: dict[str, dict] = {}
+
+    def add(term: str, kind: str, count: int, page) -> None:
+        entry = stats.setdefault(term, {"count": 0, "pages": set(), "kind": kind})
+        entry["count"] += count
+        entry["pages"].add(page)
+        if kind == "phrase":
+            entry["kind"] = "phrase"
+
     for unit in units:
-        source = _re.sub(r"\$[^$]*\$", " ", str(unit.get("source", "")))
-        source = _re.sub(r"\\[A-Za-z]+", " ", source)   # 去掉残留的 LaTeX 命令
-        words = [w.lower() for w in _re.findall(r"[A-Za-z][A-Za-z\-]{2,}", source)]
-        for word in set(words):
-            if word in STOPWORDS:
+        page = unit.get("page")
+        source = re.sub(r"\$[^$]*\$", " ", str(unit.get("source", "")))
+        source = re.sub(r"\\[A-Za-z]+", " ", source)
+        tokens = [w.lower() for w in WORD_RE.findall(source)]
+        for word in set(tokens):
+            if word in STOPWORDS or word in GENERIC_WORDS:
                 continue
-            total[word] = total.get(word, 0) + words.count(word)
-            pages.setdefault(word, set()).add(unit.get("page"))
-    ranked = sorted(
-        ((word, count) for word, count in total.items() if len(pages[word]) >= 2),
-        key=lambda item: (-len(pages[item[0]]), -item[1], item[0]),
-    )
-    return [{"en": word, "count": count, "pages": len(pages[word])} for word, count in ranked[:top]]
+            add(_singular(word), "word", tokens.count(word), page)
+        for size in (2, 3):
+            seen: set[str] = set()
+            for index in range(len(tokens) - size + 1):
+                seq = tokens[index:index + size]
+                if any(token in PHRASE_STOP for token in seq):
+                    continue
+                if len(set(seq)) < 2:
+                    continue
+                phrase = " ".join(seq)
+                if phrase in seen:
+                    continue
+                seen.add(phrase)
+                add(phrase, "phrase", 1, page)
+
+    ranked = [
+        (term, entry) for term, entry in stats.items()
+        if len(entry["pages"]) >= 2 and entry["count"] >= 2
+    ]
+    # 短语略加权：同段数时短语优先，段数差 1 以内也优先给短语
+    ranked.sort(key=lambda item: (
+        -(len(item[1]["pages"]) + (2 if item[1]["kind"] == "phrase" else 0)),
+        0 if item[1]["kind"] == "phrase" else 1,
+        -item[1]["count"],
+        item[0],
+    ))
+    return [
+        {"en": term, "count": entry["count"], "pages": len(entry["pages"]),
+         "kind": entry["kind"]}
+        for term, entry in ranked[:top]
+    ]
 
 
 def main_terms(argv: list[str]) -> int:
@@ -182,12 +251,14 @@ def main_terms(argv: list[str]) -> int:
     rows = extract_terms(workdir, args.top)
     if args.out:
         out = Path(args.out).expanduser()
-        lines = ["en,count,pages"] + [f"{r['en']},{r['count']},{r['pages']}" for r in rows]
+        lines = ["en,count,pages,kind"] + [
+            f"{r['en']},{r['count']},{r['pages']},{r['kind']}" for r in rows
+        ]
         out.write_text("\n".join(lines) + "\n", encoding="utf-8")
         paths.say(f"[术语] 候选 {len(rows)} 个已写入 {out}（按出现段数排序）")
     else:
         for row in rows:
-            print(f"{row['en']}\t{row['count']}\t{row['pages']}")
+            print(f"{row['en']}\t{row['count']}\t{row['pages']}\t{row['kind']}")
     return paths.EXIT_OK
 
 

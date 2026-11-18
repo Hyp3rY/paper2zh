@@ -244,6 +244,21 @@ def detect_figure_grids(reference) -> dict[tuple[int, int], dict]:
                             if getattr(item, "type", None) in {"image_caption", "chart_caption"}]
                 if not any(_is_subfigure_caption(item) for item in captions):
                     break
+                if members:
+                    # 这一张同时带着「上一幅图的整图图注」+ `(a)`，且后面还有子图：
+                    # 它是下一幅图的第一张，不是本组的成员。
+                    has_main = any(
+                        not _is_subfigure_caption(item)
+                        and len(build_source(spans_of(item) or [])[0].strip()) > 8
+                        for item in captions)
+                    nxt = blocks[cursor + 1] if cursor + 1 < len(blocks) else None
+                    next_sub = (
+                        nxt is not None
+                        and getattr(nxt, "type", None) in {"image", "chart"}
+                        and any(_is_subfigure_caption(item) for item in (nxt.content or []))
+                    )
+                    if has_main and next_sub:
+                        break
                 members.append((cursor, candidate))
                 cursor += 1
             if len(members) >= 2:
@@ -274,6 +289,49 @@ def detect_figure_grids(reference) -> dict[tuple[int, int], dict]:
                         }
             index = max(cursor, index + 1)
     return plan
+
+
+def relocate_main_captions(mj) -> int:
+    """把「图注挂在下一组第一张子图上」的错位修回来。
+
+    MinerU 有时把 Figure N 的整图图注挂到 Figure N+1 的第一张子图上：
+    该块同时有长图注和 `(a)` 短标签，且后面还跟着同组子图。
+    这种图注属于上一组，移到上一组最后一张图上，渲染时就会出现在表格下方。
+    """
+    moved = 0
+    for page in mj.pages:
+        blocks = list(page.blocks or [])
+        for index, block in enumerate(blocks):
+            if getattr(block, "type", None) not in {"image", "chart"}:
+                continue
+            items = list(getattr(block, "content", None) or [])
+            mains = []
+            for item in items:
+                if getattr(item, "type", None) not in {"image_caption", "chart_caption"}:
+                    continue
+                text, _ = build_source(spans_of(item) or [])
+                text = text.strip()
+                if text and not _is_subfigure_caption(item) and len(text) > 8:
+                    mains.append(item)
+            if not mains or index + 1 >= len(blocks):
+                continue
+            nxt = blocks[index + 1]
+            if getattr(nxt, "type", None) not in {"image", "chart"}:
+                continue
+            next_caps = [it for it in (nxt.content or [])
+                         if getattr(it, "type", None) in {"image_caption", "chart_caption"}
+                         and _is_subfigure_caption(it)]
+            if not next_caps:
+                continue
+            prev = blocks[index - 1] if index > 0 else None
+            if prev is None or getattr(prev, "type", None) not in {"image", "chart"}:
+                continue
+            for item in mains:
+                items.remove(item)
+                prev.content = list(prev.content or []) + [item]
+                moved += 1
+            block.content = items
+    return moved
 
 
 def prepare_image_layout(mj, *, reference=None, enabled: bool = True):

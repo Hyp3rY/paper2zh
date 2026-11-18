@@ -292,6 +292,9 @@ def main(argv: list[str]) -> int:
                  if stitch_enabled else 0)
     # 用原文识别多子图组：译文里的 (a) 可能已被翻成「子图（a）」
     reference_mj = middle.load_middle(middle_path)
+    moved = middle.relocate_main_captions(zh_mj)
+    if moved:
+        paths.say(f"[合并] 图注归位：{moved} 处")
     zh_renderer, grid_stats = middle.prepare_image_layout(
         zh_mj, reference=reference_mj, enabled=grid_enabled)
     zh_md = middle.render_markdown(zh_mj, image_renderer=zh_renderer)
@@ -302,6 +305,7 @@ def main(argv: list[str]) -> int:
     dedupe_author_prefix(bilingual_mj)
     if stitch_enabled:
         stitch_continuations(bilingual_mj, translations, bilingual=True, sources=source_texts)
+    middle.relocate_main_captions(bilingual_mj)
     bi_renderer, _ = middle.prepare_image_layout(
         bilingual_mj, reference=middle.load_middle(middle_path), enabled=grid_enabled)
     bilingual_md = middle.render_markdown(bilingual_mj, image_renderer=bi_renderer)

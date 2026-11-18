@@ -136,7 +136,7 @@ paper2zh.cmd status --workdir "<产物目录>"
 paper2zh.cmd terms --workdir "<产物目录>" --top 80 --out "<产物目录>\terms.csv"
 ```
 
-输出 `en,count,pages`（出现次数、出现段数），按段数排序。注意「不许自己写 PDF 解析脚本」
+输出 `en,count,pages,kind`（出现次数、出现段数、phrase/word）；短语优先，词形已归并，泛词已过滤。注意「不许自己写 PDF 解析脚本」
 禁的是**解析 PDF**；读已经解析好的 `chunks.json` 不违规，而 `terms` 命令已经替你做完了。
 
 `chunks.json` 是**两层嵌套**，别取错层（取错会拿到空值）：
