@@ -13,21 +13,14 @@
 
 ## 让 AI 帮你装（不想碰命令行就选这个）
 
-前提：你用的 AI **能执行本机命令**（Claude Code / Cursor / DSH 等桌面客户端）；纯聊天窗口装不了。
+复制这一句，发给能执行本机命令的 AI（Claude Code / Cursor / DSH 等桌面客户端）：
 
-把下面这段直接发给它：
+> 安装 https://github.com/Hyp3rY/paper2zh
 
-```text
-请帮我在 Windows 上安装 paper2zh：
-1. 到 https://github.com/Hyp3rY/paper2zh/releases/latest 下载文件名以 -win-x64-lite.zip 结尾的附件；
-2. 解压到 D:\Tools（会得到一个 paper2zh-v… 目录）；
-3. 进入解压出来的目录，运行 1-开始安装.cmd；如果 .cmd 被安全策略拦截，就按 AI-INSTALL.md 里的 python 方式启动；
-4. 安装约 5–10 分钟，每 30 秒看一下 安装进度.txt，告诉我到哪一步了；
-5. 装完运行自检，把结论告诉我。
-```
+它会自己看仓库里的 [AI-INSTALL.md](AI-INSTALL.md)，去最新 Release 下载轻包、解压、
+运行安装并自检，全程不用你动手。
 
-更完整的剧本（进度轮询、失败处理、退出码）在 [AI-INSTALL.md](AI-INSTALL.md)，
-那份文档不用记版本号，会自动找最新 Release。
+> 纯聊天窗口没有终端权限，装不了；这种情况按下面的「怎么装（两步）」手动操作。
 
 ## 项目背景
 
