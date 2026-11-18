@@ -328,12 +328,13 @@ def finish(args) -> int:
     # 质检结果要写进「先读我.txt」，所以这里再刷一次
     merge.refresh_readme(workdir)
     if code == 0:
-        progress.finish_stage("[质检] 全部通过")
+        progress.finish_stage("[质检] 全部通过（无需修改译文）")
     else:
         progress.finish_stage("[质检] 有问题，详见 qa.json")
     # 必须放在 finish_stage 之后：否则会被它覆盖回「质检进行中」，
     # 实测有 agent 因此在完成后继续轮询、误判还没好。
-    line = "[完成] 质检全部通过" if code == 0 else "[完成] 质检未通过，详见 qa.json"
+    line = ("[完成] 质检全部通过（无需修改译文）" if code == 0
+            else "[完成] 质检未通过，详见 qa.json")
     paths.write_progress(workdir, "done", "完成", 1, 1, line)
     paths.say(f"[完成] 产物目录：{workdir}")
 
