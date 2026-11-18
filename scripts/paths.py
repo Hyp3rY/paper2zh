@@ -113,22 +113,19 @@ def setup_stdout() -> None:
     解码子进程输出；而 Python 往管道里写字时默认用 locale(cp936)。两边不一致就乱码。
     这里让输出编码跟随控制台代码页：65001/无控制台 → UTF-8，其余 → CPxxx。
     """
-    codepage = console_codepage()
-    console_encoding = "utf-8" if codepage in (0, 65001) else f"cp{codepage}"
     for stream in (sys.stdout, sys.stderr):
-        # 被捕获（管道/文件）时一律 UTF-8：DSH、CI、`> out.txt` 都按 UTF-8 读；
-        # 只有在真正的控制台窗口里才跟随代码页（双击 cmd 时是 936）。
+        # 真正的控制台窗口：不要 reconfigure。Python 3.6+ 对控制台用的是
+        # WriteConsoleW（UTF-16），与代码页无关，改成 cp936 反而会乱码。
         try:
-            encoding = console_encoding if stream.isatty() else "utf-8"
+            if stream.isatty():
+                continue
         except (AttributeError, ValueError):
-            encoding = "utf-8"
+            pass
+        # 被捕获（管道/文件）时一律 UTF-8：DSH、CI、`> out.txt` 都按 UTF-8 读。
         try:
-            stream.reconfigure(encoding=encoding, errors="replace")  # type: ignore[attr-defined]
-        except (AttributeError, ValueError, LookupError):
-            try:
-                stream.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[attr-defined]
-            except (AttributeError, ValueError):
-                pass
+            stream.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[attr-defined]
+        except (AttributeError, ValueError):
+            pass
 
 
 def clean_path(value: str) -> str:

@@ -28,6 +28,7 @@ import json
 import os
 import shutil
 import sys
+import time
 import zipfile
 from datetime import datetime, timezone
 from pathlib import Path
@@ -93,6 +94,31 @@ def detect_targets() -> list[dict]:
     return candidates
 
 
+def _replace_tree(origin: Path, destination: Path) -> None:
+    """替换目录；被占用（客户端正在读）时先改名再复制。"""
+    try:
+        if destination.exists():
+            shutil.rmtree(destination)
+        shutil.copytree(origin, destination,
+                        ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
+        return
+    except PermissionError:
+        pass
+    backup = destination.with_name(destination.name + ".old")
+    try:
+        if backup.exists():
+            shutil.rmtree(backup, ignore_errors=True)
+        if destination.exists():
+            destination.rename(backup)
+        shutil.copytree(origin, destination,
+                        ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
+    except PermissionError as exc:
+        raise PermissionError(
+            f"{destination} 被占用（多半是 AI 客户端正在读取）；关掉客户端后重试"
+        ) from exc
+    shutil.rmtree(backup, ignore_errors=True)
+
+
 def copy_skill(source: Path, target: Path, dry_run: bool) -> int:
     if dry_run:
         return 0
@@ -104,10 +130,7 @@ def copy_skill(source: Path, target: Path, dry_run: bool) -> int:
             continue
         destination = target / name
         if origin.is_dir():
-            if destination.exists():
-                shutil.rmtree(destination)
-            shutil.copytree(origin, destination,
-                            ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
+            _replace_tree(origin, destination)
             copied += sum(1 for _ in destination.rglob("*") if _.is_file())
         else:
             shutil.copy2(origin, destination)
@@ -155,7 +178,26 @@ def write_config(root: Path, installed: list[str], dry_run: bool) -> Path:
         except json.JSONDecodeError:
             existing = {}
     existing.update(config)
-    config_path.write_text(json.dumps(existing, ensure_ascii=False, indent=1), encoding="utf-8")
+    text = json.dumps(existing, ensure_ascii=False, indent=1)
+    for _ in range(3):
+        try:
+            config_path.write_text(text, encoding="utf-8")
+            return config_path
+        except PermissionError:
+            time.sleep(0.4)
+    # 仍然被占用：把旧文件改名后再写一份
+    backup = config_path.with_name(config_path.name + ".old")
+    try:
+        if backup.exists():
+            backup.unlink()
+        config_path.rename(backup)
+    except OSError:
+        pass
+    try:
+        config_path.write_text(text, encoding="utf-8")
+    except OSError as exc:
+        print(f"  [注意] 安装位置写不进配置：{exc}")
+        print("         技能副本已装好，但下次运行可能找不到安装目录；关掉占用它的程序后重跑。")
     return config_path
 
 
@@ -191,6 +233,7 @@ def main(argv: list[str]) -> int:
         return paths.EXIT_OK
 
     installed: list[str] = []
+    failures: list[tuple[str, str, str]] = []
     for item in targets:
         if not item["detected"]:
             print(f"  [跳过]   {item['label']}（没检测到）")
@@ -198,8 +241,9 @@ def main(argv: list[str]) -> int:
         try:
             count = copy_skill(source, item["dir"], args.dry_run)
         except OSError as exc:
-            paths.fail(paths.EXIT_DISK_OR_PERM, f"写到 {item['dir']} 失败：{exc.strerror or exc}",
-                       "确认这个目录能写；被杀毒软件拦住时把目录加白名单。")
+            failures.append((item["label"], str(item["dir"]), exc.strerror or str(exc)))
+            print(f"  [注意]   {item['label']} 没装上：{exc.strerror or exc}")
+            continue
         installed.append(str(item["dir"]))
         action = "将安装到" if args.dry_run else "已装进"
         print(f"  [{action}] {item['label']}\n            {item['dir']}（{count} 个文件）")
@@ -219,6 +263,12 @@ def main(argv: list[str]) -> int:
     print(f"\n  安装位置已登记：{config_path}")
     print("\n完成。现在可以对 AI 说：「把 D:\\论文\\xxx.pdf 翻成中文」。")
     print("如果某个客户端里看不到 paper2zh，重启客户端；仍看不到就用 --pack 生成技能包手动导入。")
+    if failures:
+        print("\n以下客户端这次没装上（其它已装好）：")
+        for label, path, reason in failures:
+            print(f"  - {label}：{path}\n    {reason}")
+        print("  多半是客户端正在读取该目录：关掉对应客户端后重跑「1-开始安装.cmd」。")
+        return paths.EXIT_DISK_OR_PERM
     return paths.EXIT_OK
 
 
