@@ -2,7 +2,7 @@
 
 把英文论文 PDF 变成中文 Markdown，**公式还是公式、图片还在原位、表格不散架**。
 
-给 Windows 上不懂命令行的人用：解压 → 双击「1-开始安装.cmd」，之后只跟 AI 说话（Claude Code / Codex / Cursor / Gemini CLI / DSH / WorkBuddy / 豆包工作等都行）。
+给 Windows 上不懂命令行的人用：把仓库链接复制给 AI ，之后只跟 AI 说话（Claude Code / Codex / Cursor / Gemini CLI / DSH / WorkBuddy / 豆包工作等都行）。
 
 > **适用平台：Windows 10 / 11（x64）。** 本项目由 `.cmd` 启动器 + 嵌入式 Windows Python +
 > MinerU 的 Windows 基础包（DirectML / Vulkan）组成，**不支持 macOS 和 Linux**。
