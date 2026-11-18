@@ -272,11 +272,31 @@ def prepare(args) -> int:
         return paths.EXIT_PARSE_FAILED
 
     progress.finish_stage("[分块] 完成")
+    ask_local = False
+    if not local_model and not (workdir / "local.json").is_file():
+        try:
+            import translate as _translate
+            services = _translate.probe_local_services()
+            loaded = services[0].get("loaded_models", []) if services else []
+        except Exception:
+            loaded = []
+        if loaded:
+            ask_local = True
+            (workdir / ".ask-local.json").write_text(
+                json.dumps({"loaded_models": loaded}, ensure_ascii=False, indent=1),
+                encoding="utf-8")
+            paths.say(f"[准备] 检测到 LM Studio 已加载：{'、'.join(loaded)}")
+            paths.say("[准备] 开工前请先问用户：用本地模型，还是当前 AI 模型？")
+            paths.say(f"[准备]   本地 → paper2zh.cmd local --workdir \"{workdir}\"")
+            paths.say(f"[准备]   当前 AI → paper2zh.cmd next --agent --workdir \"{workdir}\"")
     paths.write_progress(workdir, "ready", "就绪", 1, 1,
-                         "[准备] 已完成，可以开始翻译（用 next 取段落）")
+                         "[准备] 已完成，可以开始翻译（先选择本地或当前 AI 模型）"
+                         if ask_local else "[准备] 已完成，可以开始翻译")
     if local_model:
         paths.say(f"[准备] 下一步：用 `pdftozh.py local --workdir \"<产物目录>\"` 逐段翻译"
                   f"（本地模型 {local_model} 已记录在 local.json）。")
+    elif ask_local:
+        paths.say("[准备] 下一步：先问用户用本地还是当前 AI 模型，再按上面的命令继续。")
     else:
         paths.say(f"[准备] 下一步：按 SKILL.md 翻译 {units_file.name}，用 `pdftozh.py next` 取段落。")
     return paths.EXIT_OK
@@ -405,6 +425,8 @@ def main(argv: list[str]) -> int:
     next_parser.add_argument("--model", default="")
     next_parser.add_argument("--json", action="store_true")
     next_parser.add_argument("--out", help="把 JSON 写进文件（Windows 终端编码不可靠时用）")
+    next_parser.add_argument("--agent", action="store_true",
+                             help="用户选择用当前 AI 模型翻译（跳过本地模型询问）")
 
     apply_parser = sub.add_parser("apply", help="提交译文")
     apply_parser.add_argument("--workdir", required=True)
@@ -463,6 +485,7 @@ def main(argv: list[str]) -> int:
     if args.command == "next":
         import translate
         extra = (["--json"] if args.json else []) + (["--out", args.out] if args.out else [])
+        extra += (["--agent"] if getattr(args, "agent", False) else [])
         return translate.main(["translate", "next", "--workdir", args.workdir,
                                "--limit", str(args.limit), "--model", args.model] + extra)
     if args.command == "apply":

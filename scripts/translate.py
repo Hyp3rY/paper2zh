@@ -195,7 +195,26 @@ def pending_units(workdir: Path, model: str) -> tuple[list[dict], dict[str, str]
     return pending, glossary, done
 
 
-def command_next(workdir: Path, limit: int, model: str, as_json: bool, out: Path | None = None) -> int:
+def command_next(workdir: Path, limit: int, model: str, as_json: bool,
+                 out: Path | None = None, allow_agent: bool = False) -> int:
+    ask_file = workdir / ".ask-local.json"
+    choose_file = workdir / ".translator"
+    if allow_agent:
+        choose_file.write_text(json.dumps({"mode": "agent"}, ensure_ascii=False),
+                               encoding="utf-8")
+        ask_file.unlink(missing_ok=True)
+    elif ask_file.is_file() and not choose_file.is_file():
+        try:
+            loaded = json.loads(ask_file.read_text(encoding="utf-8")).get("loaded_models", [])
+        except (OSError, json.JSONDecodeError):
+            loaded = []
+        paths.say("[翻译] 先别翻：检测到本机 LM Studio 有已加载模型。")
+        paths.say("  请先问用户：用本地模型，还是当前 AI 模型？")
+        paths.say(f"  本地 → paper2zh.cmd local --workdir \"{workdir}\"")
+        paths.say(f"  当前 AI → paper2zh.cmd next --agent --workdir \"{workdir}\"")
+        print(json.dumps({"needs_choice": True, "loaded_models": loaded},
+                         ensure_ascii=False, indent=1))
+        return paths.EXIT_BAD_USAGE
     model = resolve_model(workdir, model)
     pending, glossary, done = pending_units(workdir, model)
     batch = pending[:limit]
@@ -399,37 +418,43 @@ def _native_chat(base_url: str, model: str, system: str, user: str,
 
 
 def probe_local_services(base_url: str = "") -> list[dict]:
-    """探测本机正在运行的 LM Studio。只读，不加载任何模型。
-
-    只探测 LM Studio：`local` 后端目前只实现了它的原生 /api/v1/chat；
-    探测到 Ollama 等其它服务反而会误导 agent 去选一个跑不通的后端。
-    """
+    """探测本机 LM Studio，区分「已加载」和「仅下载」。只读，不加载模型。"""
     root_url = (base_url or "http://127.0.0.1:1234").rstrip("/")
-    found: list[dict] = []
     try:
         with urllib.request.urlopen(root_url + "/api/v1/models", timeout=3) as response:
             data = json.loads(response.read().decode("utf-8"))
     except (urllib.error.URLError, TimeoutError, OSError, json.JSONDecodeError):
-        return found
+        return []
 
-    models = []
+    models: list[str] = []
+    loaded: list[str] = []
     for item in data.get("models", []):
-        name = item.get("key") or item.get("id") or item.get("name")
-        if name:
-            models.append(str(name))
-    if models:
-        found.append({"api": "lmstudio", "base_url": root_url, "models": models})
-    return found
+        key = item.get("key") or item.get("id") or item.get("name")
+        if not key:
+            continue
+        key = str(key)
+        models.append(key)
+        if item.get("loaded_instances"):
+            loaded.append(key)
+    if not models:
+        return []
+    return [{"api": "lmstudio", "base_url": root_url,
+             "models": models, "loaded_models": loaded}]
 
 
 def command_probe(base_url: str = "", json_out: bool = False) -> int:
     services = probe_local_services(base_url)
     if services:
         for service in services:
-            paths.say(f"[本地] 检测到 {service['api']}（{service['base_url']}）："
-                      + "、".join(service["models"][:5]))
+            loaded = service.get("loaded_models", [])
+            if loaded:
+                paths.say(f"[本地] {service['api']}（{service['base_url']}）已加载："
+                          + "、".join(loaded))
+            else:
+                paths.say(f"[本地] {service['api']}（{service['base_url']}）在运行，"
+                          "但没有已加载的模型。")
     else:
-        paths.say("[本地] 没有检测到正在运行的 LM Studio / Ollama 服务。")
+        paths.say("[本地] 没有检测到正在运行的 LM Studio。")
     if json_out:
         print(json.dumps({"found": bool(services), "services": services},
                          ensure_ascii=False, indent=1))
@@ -450,13 +475,33 @@ def command_local(workdir: Path, base_url: str, model: str, limit: int,
             local_config = {}
     base_url = (base_url or local_config.get("base_url") or "http://127.0.0.1:1234").rstrip("/")
     model = (model or local_config.get("model") or "").strip()
+
+    services = probe_local_services(base_url)
+    if not services:
+        paths.fail(paths.EXIT_TRANSLATOR_UNAVAILABLE, "连不上 LM Studio",
+                   "先启动 LM Studio 的本地服务（默认 127.0.0.1:1234）。")
+    loaded = services[0].get("loaded_models", [])
+    if not loaded:
+        paths.fail(paths.EXIT_TRANSLATOR_UNAVAILABLE, "LM Studio 没有已加载的模型",
+                   "先在 LM Studio 里加载一个模型；本工具不会自动加载模型。")
     if not model:
-        paths.fail(paths.EXIT_BAD_USAGE, "没有指定本地模型",
-                   "prepare 时加 --local-model \"qwen/qwen3.5-9b\"，或 local --model …")
-    if model and not config_path.is_file():
-        config_path.write_text(json.dumps(
-            {"api": "lmstudio", "base_url": base_url, "model": model},
-            ensure_ascii=False, indent=1), encoding="utf-8")
+        if len(loaded) == 1:
+            model = loaded[0]
+        else:
+            paths.fail(paths.EXIT_BAD_USAGE,
+                       "LM Studio 同时加载了多个模型：" + "、".join(loaded),
+                       "只用其中一个：local --model \"<模型名>\"；或在 LM Studio 里卸载多余的。")
+    if model not in loaded:
+        paths.fail(paths.EXIT_BAD_USAGE, f"模型未加载：{model}",
+                   "先在 LM Studio 加载它，或用 local --probe 看已加载的模型名。")
+
+    (workdir / ".translator").write_text(
+        json.dumps({"mode": "local", "model": model}, ensure_ascii=False),
+        encoding="utf-8")
+    (workdir / ".ask-local.json").unlink(missing_ok=True)
+    config_path.write_text(json.dumps(
+        {"api": "lmstudio", "base_url": base_url, "model": model},
+        ensure_ascii=False, indent=1), encoding="utf-8")
     remember_model(workdir, model)
 
     pending, glossary, _ = pending_units(workdir, model)
@@ -681,6 +726,8 @@ def main(argv: list[str]) -> int:
     next_parser.add_argument("--model", default="", help="翻译所用模型名（进缓存键）")
     next_parser.add_argument("--json", action="store_true")
     next_parser.add_argument("--out", help="把 JSON 写进文件（Windows 终端编码不可靠时用）")
+    next_parser.add_argument("--agent", action="store_true",
+                             help="用户选择用当前 AI 模型翻译；记录选择并继续")
 
     apply_parser = sub.add_parser("apply", help="提交译文")
     apply_parser.add_argument("--workdir", required=True)
@@ -699,7 +746,8 @@ def main(argv: list[str]) -> int:
 
     if args.command == "next":
         return command_next(workdir, args.limit, args.model, args.json,
-                            Path(args.out).expanduser() if args.out else None)
+                            Path(args.out).expanduser() if args.out else None,
+                            allow_agent=getattr(args, "agent", False))
     if args.command == "apply":
         return command_apply(workdir, Path(paths.clean_path(args.file)).expanduser(),
                              json_out=getattr(args, "json", False),

@@ -136,7 +136,10 @@ paper2zh.cmd local --workdir "<产物目录>" --limit 20
 
 `local` 会逐段调用 LM Studio 的本地接口（关闭 thinking），单段上下文约 500 token，
 8 GB 显存 / 8–16k 上下文也能跑；翻完照常 `finish`。
-想先看看本机有没有在跑：`paper2zh.cmd local --probe`。
+
+- **只使用 LM Studio 里已经加载的模型**，不会自动加载；多个模型同时加载时会要求你指定；
+- `paper2zh.cmd local --probe` 可以看当前已加载的是哪个；
+- 解析完如果检测到本地模型，工具会提示你选择；想用当前 AI 模型就加 `next --agent`。
 
 ## 支持的 agent
 

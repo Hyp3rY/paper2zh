@@ -79,24 +79,31 @@ $cfg = Get-Content "$env:USERPROFILE\.paper2zh\config.json" -Raw | ConvertFrom-J
 
 X 按页数估：有独显约 **2 秒/页**，无独显约 **7 秒/页**，再加翻译时间（每段约 1 秒）。
 
-### 4.1.1 开工前检测本地模型（只问一次）
+### 4.1.1 开工前检测本地模型（必须问，且只用已加载的）
 
-解析完、开始翻译之前，先跑一次：
+`prepare` 结束时会自动检测 LM Studio：
 
-```cmd
-paper2zh.cmd local --probe --json
-```
+- 如果检测到**已加载**的模型，会在产物目录写 `.ask-local.json`，并打印：
 
-- 如果返回 `found: false`，直接按原流程 `next` / `apply`；
-- 如果检测到本地模型，且用户**没有**明确说用在线/本地，也没有 `local.json`，
-  主动问一句：
+  ```
+  [准备] 检测到 LM Studio 已加载：qwen/qwen3.5-9b
+  [准备] 开工前请先问用户：用本地模型，还是当前 AI 模型？
+  ```
 
-  > 检测到本机 LM Studio 有 `qwen/qwen3.5-9b`。要改用本地模型翻译吗？
+- 看到这段，**必须停下来问用户**，不许直接开始翻译：
+
+  > 检测到本机 LM Studio 已加载 `qwen/qwen3.5-9b`。要改用本地模型翻译吗？
   > 省钱，但比在线模型慢一点；不用就继续用现在的模型。
 
-- 用户同意 → 改名走 `local`（没登记过就 `prepare --local-model …`）；
-- 用户拒绝 → 不再提，按 `next` / `apply` 继续；
-- **每篇论文只问一次**，不要反复打扰。
+- 用户选本地 → `paper2zh.cmd local --workdir "<产物目录>"`；
+- 用户选当前 AI → `paper2zh.cmd next --agent --workdir "<产物目录>"`。
+
+**硬约束**：
+
+- 没做选择时，`next` 会拒绝并返回 `needs_choice: true`，这是故意的；
+- 本地模式**只使用 LM Studio 里已经加载的模型**：不要为了翻译去加载新模型，
+  也不要同时加载多个——`local` 发现多个会报错，要求指定或卸载；
+- 只有用户明确说「本地/离线/省钱」才用 `local`；否则问一次后按用户选择执行。
 
 ### 4.2 解析（后台执行 + 盯进度）
 
