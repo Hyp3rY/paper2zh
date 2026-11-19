@@ -16,6 +16,8 @@
     --brand:#5eead4;
     --brand-2:#38bdf8;
     --warn:#fbbf24;
+    --code-bg:#070b12;
+    --code-text:#dbe7f3;
     --radius:16px;
     --max:1080px;
   }
@@ -30,6 +32,8 @@
       --brand:#0f766e;
       --brand-2:#0284c7;
       --warn:#b45309;
+      --code-bg:#eef2f7;
+      --code-text:#0f172a;
     }
   }
   *{box-sizing:border-box}
@@ -82,6 +86,7 @@
   .card h3{margin:0 0 8px;font-size:16.5px}
   .card p{margin:0;color:var(--muted);font-size:14.5px}
   .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;counter-reset:step}
+  .steps.two-steps{grid-template-columns:repeat(2,1fr)}
   .step{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:22px;position:relative}
   .step::before{
     counter-increment:step;content:counter(step);
@@ -96,7 +101,7 @@
     border-radius:7px;padding:2px 6px;
   }
   pre{
-    background:#070b12;color:#dbe7f3;border:1px solid var(--line);border-radius:12px;
+    background:var(--code-bg);color:var(--code-text);border:1px solid var(--line);border-radius:12px;
     padding:16px 18px;overflow:auto;font-size:13.5px;line-height:1.7;
   }
   pre code{background:none;border:0;padding:0;color:inherit}
@@ -125,9 +130,9 @@
   .cmd{
     display:flex;gap:12px;align-items:center;margin:20px 0 22px;
     padding:16px 16px 16px 20px;border-radius:14px;
-    background:#070b12;border:1px solid rgba(94,234,212,.35);
+    background:var(--code-bg);border:1px solid var(--line);
   }
-  .cmd code{flex:1;background:none;border:0;padding:0;color:#dbe7f3;font-size:15.5px;white-space:nowrap;overflow:auto}
+  .cmd code{flex:1;background:none;border:0;padding:0;color:var(--code-text);font-size:15.5px;white-space:nowrap;overflow:auto}
   .cmd .btn{padding:9px 15px;white-space:nowrap}
   .dir-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:20px}
   .dir-card .label{color:var(--muted);font-size:12.5px;margin-bottom:6px}
@@ -144,6 +149,7 @@
   footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:16px}
   @media (max-width:900px){
     .grid,.steps,.two,.ai-grid,.usage-grid{grid-template-columns:1fr}
+    .steps.two-steps{grid-template-columns:1fr}
     .kvs{grid-template-columns:1fr}
     .hero{padding:56px 0 40px}
     section{padding:48px 0}
@@ -278,8 +284,8 @@
 <section id="manual-install">
   <div class="wrap">
     <h2>手动安装（备选）</h2>
-    <p class="sub">不想让 AI 代劳，或客户端不能执行命令，就走这条。下载、解压、双击，然后对 AI 说一句话。</p>
-    <div class="steps">
+    <p class="sub">不想让 AI 代劳，或客户端不能执行命令，就走这条：下载、解压、双击安装。用法见上面的<a href="#usage">「怎么用」</a>。</p>
+    <div class="steps two-steps">
       <div class="step">
         <h3>下载并解压</h3>
         <p>推荐 <b>lite 包</b>（12.6 MB），解压到纯英文路径，例如 <code>D:\Tools\paper2zh</code>。</p>
@@ -288,17 +294,6 @@
         <h3>双击安装</h3>
         <p>运行 <code>1-开始安装.cmd</code>，等 5–10 分钟。中断了再双击一次，会接着装。</p>
       </div>
-      <div class="step">
-        <h3>跟 AI 说话</h3>
-        <p>把 PDF 路径发给 AI，说「用 paper2zh 翻成中文」。产物在 PDF 旁边的「翻译结果」目录。</p>
-      </div>
-    </div>
-
-    <pre><code>/paper2zh 把 D:\论文\xxx.pdf 翻成中文</code></pre>
-
-    <div class="note">
-      纯聊天 AI 没有终端权限，装不了；需要 Claude Code、Codex、Cursor、DSH、WorkBuddy、豆包工作等
-      能执行本机命令的客户端。
     </div>
   </div>
 </section>
