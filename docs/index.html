@@ -109,6 +109,8 @@
   }
   pre code{background:none;border:0;padding:0;color:inherit}
   table{width:100%;border-collapse:collapse;font-size:14.5px;background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .table-wrap{overflow-x:auto}
+  .table-wrap table{min-width:680px}
   th,td{padding:12px 14px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
   th{color:var(--muted);font-weight:600;background:var(--panel-2);font-size:13px}
   tr:last-child td{border-bottom:0}
@@ -330,24 +332,28 @@
   <div class="wrap">
     <h2>在线、本地，怎么选</h2>
     <p class="sub">同一个工具，两种翻译方式；不是所有人都需要本地模型。</p>
+    <div class="table-wrap">
     <table>
-      <thead><tr><th>方式</th><th>适合</th><th>成本参考（18 页）</th></tr></thead>
+      <thead><tr><th>方式</th><th>适合</th><th>成本参考（18 页）</th><th>用时（18 页）</th></tr></thead>
       <tbody>
         <tr>
           <td><b>当前 AI 模型</b><br><span style="color:var(--muted)">Claude / Codex / DeepSeek …</span></td>
           <td>单篇、赶时间、想要更稳的初稿</td>
           <td>约 ¥0.23（谷时）</td>
+          <td>约 3 分钟</td>
         </tr>
         <tr>
           <td><b>本机 LM Studio</b><br><span style="color:var(--muted)">Qwen3.5-9B Q4 等</span></td>
           <td>离线、隐私、批量、愿意校订</td>
-          <td>约 ¥0.06（谷时）+ 4 分钟</td>
+          <td>约 ¥0.06（谷时）</td>
+          <td>约 7 分钟</td>
         </tr>
       </tbody>
     </table>
+    </div>
     <div class="note">
       本地 9B 的译文可读、公式数字完整，但术语会漂、作者名可能被音译、少量直译；
-      新版会自动统一术语、恢复作者原名，语义仍需在线模型检查。
+      新版会自动统一术语、恢复作者原名，语义仍需在线模型检查。用时含解析、翻译与出稿。
       <br>实测配置：RTX 2070 Laptop，Qwen3.5-9B Q4，上下文 19831，Top P 0.2，
       Presence Penalty 0.2，约 40 tok/s。
     </div>
