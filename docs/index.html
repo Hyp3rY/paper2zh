@@ -145,7 +145,6 @@
   ul.clean b{color:var(--text);font-weight:600}
   .kvs{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
   .two .kvs{grid-template-columns:1fr}
-  #preserved .kvs{margin-top:-14px}
   .kv{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
   .kv .k{color:var(--muted);font-size:12.5px;margin-bottom:4px}
   .kv .v{font-weight:600;font-size:15px}
@@ -156,7 +155,6 @@
     .grid,.steps,.two,.ai-grid,.usage-grid{grid-template-columns:1fr}
     .steps.two-steps{grid-template-columns:1fr}
     .kvs{grid-template-columns:1fr}
-    #preserved .kvs{margin-top:0}
     .hero{padding:56px 0 40px}
     section{padding:48px 0}
   }
@@ -306,16 +304,18 @@
 
 <section id="preserved">
   <div class="wrap">
-    <h2>它保住了什么</h2>
-    <p class="sub">不是“看起来差不多”，而是结构级保真，再由五道质检兜底。</p>
     <div class="two">
-      <ul class="clean">
-        <li><b>公式</b>：行内/行间公式数量、顺序、内容逐条比对，转成 Word 时变成 OMML 原生公式。</li>
-        <li><b>图片</b>：按原版面宽度嵌入，路径全部校验；多子图会合成表格，图注归位。</li>
-        <li><b>表格</b>：保留行列结构，不把表格拍成图片。</li>
-        <li><b>引用</b>：括号引用、图、表、公式编号对齐检查。</li>
-        <li><b>断点续译</b>：中断后从上次的位置继续，已翻段落不重发。</li>
-      </ul>
+      <div>
+        <h2>它保住了什么</h2>
+        <p class="sub">不是“看起来差不多”，而是结构级保真，再由五道质检兜底。</p>
+        <ul class="clean">
+          <li><b>公式</b>：行内/行间公式数量、顺序、内容逐条比对，转成 Word 时变成 OMML 原生公式。</li>
+          <li><b>图片</b>：按原版面宽度嵌入，路径全部校验；多子图会合成表格，图注归位。</li>
+          <li><b>表格</b>：保留行列结构，不把表格拍成图片。</li>
+          <li><b>引用</b>：括号引用、图、表、公式编号对齐检查。</li>
+          <li><b>断点续译</b>：中断后从上次的位置继续，已翻段落不重发。</li>
+        </ul>
+      </div>
       <div class="kvs">
         <div class="kv"><div class="k">质检项</div><div class="v">公式 / 图片 / 表格 / 引用 / 语言</div></div>
         <div class="kv"><div class="k">输出</div><div class="v">zh.md · bilingual.md · qa.json</div></div>
