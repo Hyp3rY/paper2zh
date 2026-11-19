@@ -1,0 +1,553 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>A Synthetic Benchmark for Layout-Preserving Scientific Translation</title>
+<style>
+  @page { size: A4; margin: 0; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: #fff; }
+  body {
+    font-family: "Times New Roman", "Nimbus Roman", "Liberation Serif", serif;
+    color: #111;
+    font-size: 9.1pt;
+    line-height: 1.38;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .page {
+    position: relative;
+    width: 210mm;
+    height: 297mm;
+    padding: 19mm 16mm 15mm;
+    overflow: hidden;
+    page-break-after: always;
+    break-after: page;
+    background: #fff;
+  }
+  .page:last-child { page-break-after: auto; break-after: auto; }
+  .running-head {
+    position: absolute;
+    top: 8.5mm; left: 16mm; right: 16mm;
+    display: flex; justify-content: space-between; gap: 6mm;
+    font-size: 7.2pt; color: #444;
+    border-bottom: 0.45pt solid #8a8a8a;
+    padding-bottom: 1.3mm;
+    letter-spacing: 0.01em;
+  }
+  .page-footer {
+    position: absolute;
+    bottom: 7.5mm; left: 16mm; right: 16mm;
+    display: flex; justify-content: space-between; gap: 6mm;
+    font-size: 7.2pt; color: #555;
+    border-top: 0.45pt solid #8a8a8a;
+    padding-top: 1.3mm;
+  }
+  .full { margin-bottom: 5mm; }
+  h1.title {
+    font-size: 20pt; line-height: 1.16; text-align: center;
+    margin: 2mm 0 3mm; font-weight: bold; letter-spacing: -0.01em;
+  }
+  .authors { text-align: center; font-size: 10.5pt; margin: 0 0 1.5mm; }
+  .affiliation { text-align: center; font-size: 8.6pt; color: #333; margin: 0 0 3mm; }
+  .abstract {
+    border-top: 0.7pt solid #222; border-bottom: 0.7pt solid #222;
+    padding: 2.4mm 3mm; margin: 0 0 2.2mm; font-size: 8.9pt;
+  }
+  .abstract b { font-variant: small-caps; }
+  .keywords { font-size: 8.6pt; margin: 0 0 2mm; }
+  .keywords b { font-variant: small-caps; }
+  .content { column-count: 2; column-gap: 8mm; column-fill: balance; height: 247mm; }
+  .page.first .content { height: 167mm; }
+  h2 {
+    font-size: 11.2pt; margin: 1.2mm 0 1.4mm; line-height: 1.2;
+    font-weight: bold; break-after: avoid;
+  }
+  h3 {
+    font-size: 9.8pt; margin: 1.8mm 0 1mm; font-style: italic; font-weight: bold;
+    break-after: avoid;
+  }
+  p { margin: 0 0 2.1mm; text-align: justify; hyphens: auto; }
+  .dropcap::first-letter {
+    float: left; font-size: 23pt; line-height: 0.82; padding: 1mm 1.2mm 0 0;
+    font-weight: bold;
+  }
+  .eq {
+    display: flex; align-items: center; gap: 2mm;
+    margin: 1.7mm 0 2mm; break-inside: avoid;
+  }
+  .eq math { flex: 1; font-size: 9.3pt; }
+  .eq .num { flex: 0 0 auto; white-space: nowrap; }
+  math { font-family: "Cambria Math", "Latin Modern Math", serif; }
+  mtext { font-family: "Times New Roman", serif; }
+  figure { margin: 2mm 0 2.4mm; break-inside: avoid; }
+  figure img { display: block; width: 100%; height: auto; border: 0.3pt solid #d0d0d0; }
+  figcaption {
+    font-size: 7.9pt; line-height: 1.3; color: #222;
+    margin-top: 1.2mm; text-align: justify;
+  }
+  figcaption b { font-variant: small-caps; }
+  .paper-table {
+    width: 100%; border-collapse: collapse; font-size: 7.9pt; line-height: 1.25;
+    margin: 1.6mm 0 2.4mm; break-inside: avoid;
+  }
+  .paper-table caption {
+    caption-side: top; text-align: left; font-size: 7.9pt;
+    margin-bottom: 1mm; color: #222;
+  }
+  .paper-table th, .paper-table td {
+    border-top: 0.45pt solid #555; border-bottom: 0.45pt solid #555;
+    padding: 1.1mm 1.2mm; text-align: left; vertical-align: top;
+  }
+  .paper-table thead th { border-top: 0.9pt solid #111; border-bottom: 0.55pt solid #111; }
+  .paper-table tbody tr:last-child td { border-bottom: 0.9pt solid #111; }
+  .paper-table .num { text-align: right; font-variant-numeric: tabular-nums; }
+  .references { font-size: 7.5pt; line-height: 1.3; }
+  .references p { margin: 0 0 1.2mm; padding-left: 4.5mm; text-indent: -4.5mm; text-align: left; }
+  .note { font-size: 8pt; color: #333; font-style: italic; margin-top: 2mm; }
+  .keep { break-inside: avoid; }
+</style>
+</head>
+<body>
+
+<!-- ================= PAGE 1 ================= -->
+<div class="page first">
+  <div class="running-head">
+    <span>Synthetic Benchmark for Layout-Preserving Translation</span>
+    <span>Demo Manuscript</span>
+  </div>
+
+  <div class="full">
+    <h1 class="title">A Synthetic Benchmark for Layout-Preserving<br>Scientific Translation</h1>
+    <div class="authors">A. Example, B. Sample, and C. Demo</div>
+    <div class="affiliation">Institute of Synthetic Documents, Example University, Nowhere</div>
+    <div class="abstract">
+      <b>Abstract.</b> This manuscript is intentionally synthetic. It exists to exercise a
+      document-processing pipeline with two-column layout, running headers and footers,
+      inline and display mathematics, raster figures, and tables. The text is written in
+      plain academic English; all names, institutions, measurements, and citations are
+      fictional. No result in this document should be interpreted as a scientific claim.
+      The layout is designed to be parsed, translated, and rendered back without losing
+      formulas, images, or table structure.
+    </div>
+    <div class="keywords"><b>Keywords:</b> synthetic document; layout preservation; scientific translation; evaluation</div>
+  </div>
+
+  <div class="content">
+    <h2>1. Introduction</h2>
+    <p>Document translation systems are often evaluated on plain text, where
+    paragraphs flow without columns, floats, or numbered equations. Real scientific
+    manuscripts are less cooperative. A single page may combine a two-column body, a
+    full-width abstract, inline symbols, display equations, a figure caption, and a table
+    whose header is split into several cells. A translation that ignores this structure can
+    be readable and still be wrong: formulas drift out of order, captions attach to the
+    wrong image, and table headers lose their meaning.</p>
+
+    <p>This demo document isolates those layout features. It is not a study of any physical
+    system. The numbers in the figures are generated by simple functions, and the references
+    are invented. The goal is to provide a compact, redistributable input for testing a
+    deterministic parsing and rendering pipeline, and for showing what a translated version
+    looks like when the original layout is respected.</p>
+
+    <p>A second motivation is reproducibility. Papers used in layout experiments are often
+    copyrighted, large, or difficult to redistribute. A synthetic manuscript can be checked
+    into a repository, regenerated from source, and compared across tools without asking a
+    reader to download a real publication. The source of this document is a single HTML file;
+    the PDF is produced by a headless browser and the figures are generated by a short script.</p>
+
+    <h2>2. Pipeline Overview</h2>
+    <p>The processing pipeline has four deterministic stages. First, the PDF is parsed into
+    a structured intermediate representation. Second, the representation is split into
+    translatable text units while formulas and images are preserved as opaque objects. Third,
+    the units are translated by a language model. Fourth, the translated units are written
+    back into the representation and rendered by the original document renderer. Quality gates
+    compare formula counts, image paths, table structure, and citation markers before the
+    result is accepted.</p>
+
+    <figure>
+      <img src="fig1_pipeline.png" alt="Pipeline diagram">
+      <figcaption><b>Figure 1.</b> A synthetic block diagram of the processing pipeline. The
+      language model only sees text units; formulas, images, and table structure remain under
+      the control of deterministic scripts.</figcaption>
+    </figure>
+
+    <p>The separation matters because language models are good at rewriting sentences and poor
+    at preserving byte-level structure. A model that is asked to reproduce a full page will
+    eventually move a parenthesis or merge two table cells. A model that is asked to translate
+    one paragraph at a time, with formulas replaced by protected placeholders, has a much
+    smaller surface for error.</p>
+
+    <h3>2.1. Design constraints</h3>
+    <p>The pipeline is constrained to local parsing and local rendering. No page is uploaded
+    to a remote parsing service. The translator may be a hosted model or a local model; this
+    choice affects cost and latency but not the layout contract. The contract is simple: every
+    formula, image, and table cell in the output must correspond to an object in the input.</p>
+
+    <h3>2.1.1. Scope of the sample</h3>
+    <p>The sample is intentionally small. It contains four figures, two tables, six display
+    equations, and a handful of inline symbols; a real paper may contain ten times as many.
+    The point is not scale but variety: the sample includes a diagram, a line chart, a bar
+    chart, a heat map, a table with a split header, and equations with fractions, integrals,
+    and limits. These are the objects most likely to be damaged by a text-only translation.</p>
+  </div>
+
+  <div class="page-footer">
+    <span>Generated for paper2zh layout testing</span>
+    <span>Page 1 of 4</span>
+  </div>
+</div>
+
+<!-- ================= PAGE 2 ================= -->
+<div class="page">
+  <div class="running-head">
+    <span>2. Method and evaluation metrics</span>
+    <span>Demo Manuscript</span>
+  </div>
+
+  <div class="content">
+    <h2>2.2. Governing equations</h2>
+    <p>To exercise display mathematics, the document includes equations of different shapes:
+    a conservation law, a dimensionless group, an integral definition, and a transform pair.
+    None of them is used in a derivation; they are layout objects. The first expression is a
+    compact form of the incompressible momentum balance,</p>
+
+    <div class="eq">
+      <math display="block">
+        <mrow>
+          <mi>ρ</mi>
+          <mrow><mo>(</mo>
+            <mfrac><mrow><mo>∂</mo><mi>u</mi></mrow><mrow><mo>∂</mo><mi>t</mi></mrow></mfrac>
+            <mo>+</mo>
+            <mrow><mo>(</mo><mi>u</mi><mo>·</mo><mo>∇</mo><mo>)</mo></mrow>
+            <mi>u</mi>
+          <mo>)</mo></mrow>
+          <mo>=</mo>
+          <mo>−</mo><mo>∇</mo><mi>p</mi>
+          <mo>+</mo><mi>μ</mi><msup><mo>∇</mo><mn>2</mn></msup><mi>u</mi>
+          <mo>+</mo><mi>f</mi>
+        </mrow>
+      </math>
+      <span class="num">(1)</span>
+    </div>
+
+    <p>where <math><mi>u</mi></math> is a velocity field, <math><mi>p</mi></math> is pressure,
+    <math><mi>μ</mi></math> is dynamic viscosity, and <math><mi>f</mi></math> collects body
+    forces. A dimensionless group is then defined as</p>
+
+    <div class="eq">
+      <math display="block">
+        <mrow>
+          <mi>Re</mi><mo>=</mo>
+          <mfrac><mrow><mi>ρ</mi><mi>U</mi><mi>L</mi></mrow><mi>μ</mi></mfrac>
+          <mo>,</mo>
+        </mrow>
+      </math>
+      <span class="num">(2)</span>
+    </div>
+
+    <p>with <math><mi>U</mi></math> a reference speed and <math><mi>L</mi></math> a reference
+    length. The lift coefficient is written as an integral over a chord,</p>
+
+    <div class="eq">
+      <math display="block">
+        <mrow>
+          <msub><mi>C</mi><mi>L</mi></msub><mo>=</mo>
+          <mfrac><mn>1</mn><mrow><mn>0.5</mn><mi>ρ</mi><msup><mi>U</mi><mn>2</mn></msup><mi>c</mi></mrow></mfrac>
+          <msubsup><mo>∫</mo><mn>0</mn><mi>c</mi></msubsup>
+          <mrow><mo>(</mo><msub><mi>p</mi><mi>l</mi></msub><mo>−</mo><msub><mi>p</mi><mi>u</mi></msub><mo>)</mo></mrow>
+          <mi>d</mi><mi>x</mi><mo>,</mo>
+        </mrow>
+      </math>
+      <span class="num">(3)</span>
+    </div>
+
+    <p>and the final pair is a Fourier transform and its inverse, included to test nested
+    superscripts and limits:</p>
+
+    <div class="eq">
+      <math display="block">
+        <mrow>
+          <mi>F</mi><mo>(</mo><mi>ω</mi><mo>)</mo><mo>=</mo>
+          <msubsup><mo>∫</mo><mrow><mo>−</mo><mo>∞</mo></mrow><mrow><mo>+</mo><mo>∞</mo></mrow></msubsup>
+          <mi>f</mi><mo>(</mo><mi>t</mi><mo>)</mo>
+          <msup><mi>e</mi><mrow><mo>−</mo><mi>i</mi><mi>ω</mi><mi>t</mi></mrow></msup>
+          <mi>d</mi><mi>t</mi><mo>.</mo>
+        </mrow>
+      </math>
+      <span class="num">(4)</span>
+    </div>
+
+    <h2>2.3. Surrogate response</h2>
+    <p>Figure 2 shows two synthetic responses. The solid curve is a damped oscillation; the
+    dashed curve is a power law. The two curves cross near the middle of the range, which makes
+    the legend and the line styles useful for checking whether a renderer preserves figure
+    internals rather than replacing the figure with a caption.</p>
+
+    <figure>
+      <img src="fig2_lines.png" alt="Line chart">
+      <figcaption><b>Figure 2.</b> Synthetic thrust coefficient versus flight speed. The
+      curves are generated from simple functions; the crossing point is intentional.</figcaption>
+    </figure>
+
+    <p>Table 1 lists the parameters of the synthetic cases. The values are chosen to make the
+    table narrow enough for one column but wide enough to require a header row and a unit row.
+    The last column is right-aligned to test numeric alignment.</p>
+
+    <table class="paper-table">
+      <caption>Table 1. Synthetic case definitions.</caption>
+      <thead>
+        <tr><th>Case</th><th>Speed (m/s)</th><th>Angle (°)</th><th class="num">Weight</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>C1</td><td class="num">30</td><td class="num">2.0</td><td class="num">0.25</td></tr>
+        <tr><td>C2</td><td class="num">60</td><td class="num">3.5</td><td class="num">0.40</td></tr>
+        <tr><td>C3</td><td class="num">90</td><td class="num">5.0</td><td class="num">0.55</td></tr>
+        <tr><td>C4</td><td class="num">110</td><td class="num">6.5</td><td class="num">0.70</td></tr>
+      </tbody>
+    </table>
+
+    <h2>2.4. Evaluation protocol</h2>
+    <p>The protocol is deliberately mechanical. Each translated output is compared with the
+    source at three levels: object level (counts and order of formulas, figures, tables),
+    block level (paragraph boundaries, captions, headers and footers), and text level (a
+    short human readability score). The first two are computed by scripts, while the third
+    is a brief manual review of a fixed sample. A document passes when all structural checks
+    are exact and no sampled paragraph changes the meaning of its source.</p>
+
+    <h3>2.4.1. Structural checks</h3>
+    <p>Formula checks compare the sequence of LaTeX strings, not only their number. Image
+    checks compare the set of referenced asset paths and their order of appearance. Table
+    checks compare row and column counts and the text of the header row. Citation checks
+    compare the multiset of bracketed numbers. These checks are intentionally strict; a
+    single reordered formula is treated as a failure even if the surrounding prose remains
+    readable.</p>
+
+    <h3>2.4.2. Sampling</h3>
+    <p>Human review uses a fixed sample: the abstract, the first paragraph of each section,
+    the paragraph before and after each display equation, and every figure caption. This
+    sample is small enough to review in a few minutes and broad enough to catch the common
+    failure modes. It is not intended to estimate translation quality statistically; it is a
+    smoke test for the layout contract.</p>
+
+    <h2>2.5. Failure modes</h2>
+    <p>Three failure modes motivate the checks. The first is formula drift: a model may
+    translate a sentence and quietly drop a subscript or move a parenthesis. The second is
+    caption attachment: a model may merge a figure caption into the preceding paragraph, so
+    the caption no longer belongs to the image. The third is table fragmentation: a header
+    cell may be split into several cells by subscripts, and a model may translate the
+    fragments as independent words. Each failure is visible in the structural diff, even
+    when the prose reads smoothly.</p>
+  </div>
+
+  <div class="page-footer">
+    <span>Generated for paper2zh layout testing</span>
+    <span>Page 2 of 4</span>
+  </div>
+</div>
+
+<!-- ================= PAGE 3 ================= -->
+<div class="page">
+  <div class="running-head">
+    <span>3. Results and discussion</span>
+    <span>Demo Manuscript</span>
+  </div>
+
+  <div class="content">
+    <h2>3. Results</h2>
+    <p>The synthetic results are presented in two forms. Figure 3 compares the maximum
+    coefficient across five conditions, and Table 2 reports the same values in a compact
+    matrix. The bar chart uses two colors and a legend; the table uses a split header. Both
+    are common in real papers and both are easy to damage during translation if the renderer
+    treats a figure as a paragraph or a table as a single text block.</p>
+
+    <figure>
+      <img src="fig3_bars.png" alt="Bar chart">
+      <figcaption><b>Figure 3.</b> Maximum thrust coefficient for installed and isolated
+      configurations. The bars are synthetic and do not represent a physical experiment.</figcaption>
+    </figure>
+
+    <p>Figure 4 is a heat map with row and column labels. It is included because heat maps
+    often contain many small labels that are easy to lose when an image is re-encoded. The
+    color bar is part of the image, not a separate legend.</p>
+
+    <figure>
+      <img src="fig4_heatmap.png" alt="Heat map">
+      <figcaption><b>Figure 4.</b> Synthetic lateral asymmetry map. Rows are panels and
+      columns are azimuth sectors; the color scale is arbitrary.</figcaption>
+    </figure>
+
+    <h2>3.1. Observations</h2>
+    <p>Three observations follow from the synthetic data. First, the installed configuration
+    has a higher peak in the middle of the speed range. Second, the isolated configuration
+    grows monotonically, so the two curves cross. Third, the heat map shows a diagonal pattern
+    that makes it easy to see whether row and column labels stayed attached to their cells.</p>
+
+    <div class="eq">
+      <math display="block">
+        <mrow>
+          <munder><mo>min</mo><mrow><mi>x</mi><mo>∈</mo><msup><mi>ℝ</mi><mi>n</mi></msup></mrow></munder>
+          <mfrac><mn>1</mn><mn>2</mn></mfrac>
+          <msubsup><mrow><mo>‖</mo><mi>A</mi><mi>x</mi><mo>−</mo><mi>b</mi><mo>‖</mo></mrow><mn>2</mn><mn>2</mn></msubsup>
+          <mo>+</mo><mi>λ</mi><msub><mrow><mo>‖</mo><mi>x</mi><mo>‖</mo></mrow><mn>1</mn></msub>
+        </mrow>
+      </math>
+      <span class="num">(5)</span>
+    </div>
+
+    <p>Equation (5) is a placeholder optimization objective, included only to test a second
+    display style with an under-script and nested norms. The wake model in equation (6) is
+    likewise illustrative:</p>
+
+    <div class="eq">
+      <math display="block">
+        <mrow>
+          <msub><mi>u</mi><mi>w</mi></msub><mo>(</mo><mi>x</mi><mo>,</mo><mi>r</mi><mo>)</mo>
+          <mo>=</mo><msub><mi>U</mi><mo>∞</mo></msub>
+          <mrow><mo>[</mo><mn>1</mn><mo>−</mo>
+            <mrow><mo>(</mo><mn>1</mn><mo>−</mo><msqrt><mrow><mn>1</mn><mo>−</mo><msub><mi>C</mi><mi>T</mi></msub></mrow></msqrt><mo>)</mo></mrow>
+            <mi>exp</mi><mrow><mo>(</mo><mo>−</mo>
+              <mfrac><msup><mi>r</mi><mn>2</mn></msup><mrow><mn>2</mn><msup><mi>σ</mi><mn>2</mn></msup></mrow></mfrac>
+            <mo>)</mo></mrow>
+          <mo>]</mo></mrow>
+        </mrow>
+      </math>
+      <span class="num">(6)</span>
+    </div>
+
+    <table class="paper-table">
+      <caption>Table 2. Synthetic coefficient matrix (dimensionless).</caption>
+      <thead>
+        <tr><th>Case</th><th class="num">Installed</th><th class="num">Isolated</th><th class="num">Ratio</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>C1</td><td class="num">0.31</td><td class="num">0.28</td><td class="num">1.11</td></tr>
+        <tr><td>C2</td><td class="num">0.42</td><td class="num">0.36</td><td class="num">1.17</td></tr>
+        <tr><td>C3</td><td class="num">0.51</td><td class="num">0.44</td><td class="num">1.16</td></tr>
+        <tr><td>C4</td><td class="num">0.46</td><td class="num">0.40</td><td class="num">1.15</td></tr>
+      </tbody>
+    </table>
+
+    <p>The numbers are not physically meaningful. Their only purpose is to give the parser
+    and the renderer something to check: three decimal places, a ratio column, and a caption
+    above the table rather than below it.</p>
+
+    <h2>3.2. Ablation</h2>
+    <p>To make the layout test more informative, we compare three renderings of the same
+    synthetic page. The first keeps the original two columns and all floats. The second
+    collapses the body to a single column but keeps the figures and tables in place. The
+    third converts the page to plain text and drops the figures. The first rendering is the
+    only one that satisfies the structural checks; the second loses column-level ordering,
+    and the third loses four images and two tables. This ablation is trivial, but it shows
+    why a structural diff is necessary: all three renderings can be read, and only the first
+    preserves the document as an object.</p>
+
+    <h2>3.3. Qualitative check</h2>
+    <p>A short manual review of the sampled paragraphs found no missing sentences in the
+    synthetic source. The main readability issue is expected: fictional technical prose
+    contains many noun phrases and few pronouns, so a literal translation can sound
+    repetitive. This is a property of the sample, not a property of the pipeline. A real
+    evaluation should use domain text and a reviewer familiar with the field.</p>
+
+    <h2>3.4. Discussion of the numbers</h2>
+    <p>The numerical values in Figures 2–4 are generated, not measured. They are chosen to
+    exercise axis labels, legends, and color bars; they should not be compared with any
+    physical data. The only meaningful comparison is between the source PDF and the translated
+    output: the figures should look the same, and the numbers in the text should match the
+    numbers in the figures.</p>
+  </div>
+
+  <div class="page-footer">
+    <span>Generated for paper2zh layout testing</span>
+    <span>Page 3 of 4</span>
+  </div>
+</div>
+
+<!-- ================= PAGE 4 ================= -->
+<div class="page">
+  <div class="running-head">
+    <span>4. Discussion, conclusion, and references</span>
+    <span>Demo Manuscript</span>
+  </div>
+
+  <div class="content">
+    <h2>4. Discussion</h2>
+    <p>Layout-preserving translation is a constraint satisfaction problem disguised as a
+    language task. The language model can choose words, but it cannot be allowed to choose
+    which formulas survive, where an image sits, or how many cells a table contains. The
+    synthetic manuscript makes those constraints visible: a translated version should still
+    have six display equations, four figures, two tables, and a running header and footer on
+    every page.</p>
+
+    <p>A practical evaluation should therefore combine a human readability score with a
+    structural diff. Readability alone will not catch a missing minus sign in an equation;
+    structural diff alone will not catch a sentence that is grammatical but has the opposite
+    meaning. The two checks are complementary, and both are cheaper than re-reading a badly
+    translated page from scratch.</p>
+
+    <h3>4.1. What this demo does not test</h3>
+    <p>This document does not test scanned pages, handwritten annotations, rotated text,
+    multi-column tables that span a page break, or equations that are embedded as images.
+    Those cases are important but harder to generate synthetically. It also does not test
+    citation resolution beyond simple bracketed numbers.</p>
+
+    <h3>4.2. Reproducibility</h3>
+    <p>The PDF is generated from a single HTML file with a headless browser. The four figures
+    are generated by a short Python script using Pillow. The content is fictional, so the
+    whole sample can be redistributed with the project without a copyright review. A future
+    version can add a second sample with a scanned page and a third with a complex table.</p>
+
+    <h3>4.3. Threats to validity</h3>
+    <p>The sample is small and synthetic, so it cannot establish that the pipeline works on
+    every real paper. It also excludes adversarial cases: pages with overlapping text,
+    equations rendered as images, or tables that continue across a page break. Those cases
+    are common enough that a production evaluation should include them. The structural checks
+    are necessary but not sufficient; they do not prove that a translation is correct, only
+    that the document has not been deformed.</p>
+
+    <h3>4.4. Future samples</h3>
+    <p>A useful next step is a small suite rather than a single document: one synthetic paper
+    with a long table, one scanned page with OCR noise, and one paper with a figure that spans
+    two columns. The suite should be small enough to review by hand and diverse enough to
+    expose different failure modes. The source for each sample should be checked in, so the
+    PDF can be regenerated and the comparison repeated after a code change.</p>
+
+    <h3>4.5. Practical recommendation</h3>
+    <p>For a translation tool, the most useful output is not a perfect page but a page whose
+    failures are visible. A structural report that names the affected block is more valuable
+    than a fluent translation that silently loses an equation. The demo is designed around
+    that principle: it is easy to see what should be preserved, and easy to check whether it
+    survived.</p>
+
+    <h2>5. Conclusion</h2>
+    <p>We have described a small synthetic manuscript for testing layout-preserving
+    translation. It combines two-column text, running headers and footers, display and inline
+    mathematics, raster figures, and tables. The document is intentionally boring: its value
+    is that it is reproducible, redistributable, and structurally rich enough to expose
+    failures that plain-text tests miss.</p>
+
+    <p class="note">All content in this file is fictional. Names, affiliations, measurements,
+    and references were invented for layout testing; they do not describe a real study.</p>
+
+    <h2>References</h2>
+    <div class="references">
+      <p>[1] A. Example. “A fictitious survey of synthetic documents.” <i>Journal of
+      Reproducible Layouts</i>, 12(3):45–61, 2024. (Fictional.)</p>
+      <p>[2] B. Sample and C. Demo. “Rendering contracts for translated manuscripts.” In
+      <i>Proceedings of the Synthetic Document Workshop</i>, pages 1–8, 2025. (Fictional.)</p>
+      <p>[3] D. Placeholder. “On the stability of two-column layouts.” <i>Demo Letters</i>,
+      7(2):101–119, 2023. (Fictional.)</p>
+      <p>[4] E. Example. “Quality gates for formula-preserving translation.” <i>Preprint</i>,
+      arXiv:0000.00000, 2026. (Fictional.)</p>
+      <p>[5] F. Sample. “A note on synthetic benchmarks.” <i>Technical Report TR-00</i>,
+      Example University, 2025. (Fictional.)</p>
+    </div>
+  </div>
+
+  <div class="page-footer">
+    <span>Generated for paper2zh layout testing</span>
+    <span>Page 4 of 4</span>
+  </div>
+</div>
+
+</body>
+</html>

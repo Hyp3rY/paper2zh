@@ -42,6 +42,22 @@ qa.json          自动检查结果
 
 **选模型**：优先选响应快的通用模型，不必上最强推理模型——快模型约 1–3 秒/段，慢模型可能 5–15 秒/段。也可以用**在线模型调度本机 LM Studio**：先加载一个模型，工具检测到后会主动问你要不要用。
 
+## 效果展示
+
+一篇 4 页、双栏、带公式 / 图 / 表 / 页眉页脚的合成论文，内容全部虚构：
+
+[示例 PDF](samples/demo-paper/demo-paper.pdf) ·
+[在线版 bilingual.md](samples/demo-paper/翻译结果/demo-paper/bilingual.md) ·
+[本地 9B 版](samples/demo-paper/翻译结果/demo-paper-local/bilingual.md) ·
+[样本说明与复现步骤](samples/demo-paper/README.md)
+
+![原 PDF / 在线 / 本地对比](samples/demo-paper/preview-comparison.png)
+
+![图与公式细节](samples/demo-paper/preview-detail.png)
+
+> 两份译文都通过了公式、图片、表格、引用、语言五项质检。
+> 在线版 77 段一次收齐；本地 9B 首轮退回 2 段（把 Unicode 数学符号改成了 `$...$`），补交后通过。
+
 ## 项目背景
 
 这个项目起源于一个具体问题：让 AI 直接读英文论文 PDF，它往往会现场写一堆
