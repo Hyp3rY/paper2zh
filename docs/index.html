@@ -15,6 +15,9 @@
     --line:rgba(255,255,255,.09);
     --brand:#5eead4;
     --brand-2:#38bdf8;
+    --btn-1:var(--brand);
+    --btn-2:var(--brand-2);
+    --btn-text:#06221f;
     --warn:#fbbf24;
     --code-bg:#070b12;
     --code-text:#dbe7f3;
@@ -31,6 +34,9 @@
       --line:rgba(15,23,42,.10);
       --brand:#0f766e;
       --brand-2:#0284c7;
+      --btn-1:#5eead4;
+      --btn-2:#7dd3fc;
+      --btn-text:#083344;
       --warn:#b45309;
       --code-bg:#eef2f7;
       --code-text:#0f172a;
@@ -72,7 +78,7 @@
     transition:.15s ease;
   }
   .btn:hover{text-decoration:none;transform:translateY(-1px);border-color:rgba(94,234,212,.45)}
-  .btn.primary{background:linear-gradient(100deg,var(--brand),var(--brand-2));color:#06221f;border:0}
+  .btn.primary{background:linear-gradient(100deg,var(--btn-1),var(--btn-2));color:var(--btn-text);border:0}
   .btn.primary:hover{filter:brightness(1.06)}
   .hero-meta{display:flex;flex-wrap:wrap;gap:18px;color:var(--muted);font-size:13.5px;margin-top:18px}
   .hero-meta b{color:var(--text);font-weight:600}
