@@ -80,6 +80,7 @@
   h2{font-size:clamp(24px,3vw,32px);margin:0 0 10px;letter-spacing:-.01em}
   .sub{color:var(--muted);margin:0 0 30px;max-width:820px}
   .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  .grid.faq-grid{grid-template-columns:repeat(2,1fr)}
   .card{
     background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
     padding:22px;min-height:150px;
@@ -160,6 +161,7 @@
   footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:16px}
   @media (max-width:900px){
     .grid,.steps,.two,.ai-grid,.usage-grid{grid-template-columns:1fr}
+    .grid.faq-grid{grid-template-columns:1fr}
     .steps.two-steps{grid-template-columns:1fr}
     .kvs{grid-template-columns:1fr}
     .model-tip{flex-direction:column;gap:8px}
@@ -414,17 +416,17 @@
   </div>
 </section>
 
-<section>
+<section id="faq">
   <div class="wrap">
     <h2>常见问题</h2>
-    <div class="grid">
+    <div class="grid faq-grid">
       <div class="card">
         <h3>会改坏我的 PDF 吗？</h3>
         <p>不会。只读 PDF，所有产物写到「翻译结果」目录，原文件不动。</p>
       </div>
       <div class="card">
         <h3>扫描件能翻吗？</h3>
-        <p>能解析，但清晰度决定识别质量。建议翻完先核对前两页；纯图片、无文字层的文档效果有限。</p>
+        <p>能解析，但清晰度决定识别质量。<br>建议翻完先核对前两页；纯图片、无文字层的文档效果有限。</p>
       </div>
       <div class="card">
         <h3>参考文献会翻吗？</h3>
@@ -432,11 +434,11 @@
       </div>
       <div class="card">
         <h3>一定要装本地模型吗？</h3>
-        <p>不用。默认用当前 AI 模型；本地模型只是可选项，适合离线/隐私/批量。</p>
+        <p>不用。默认用当前 AI 模型。<br>本地模型只是可选项，适合离线/隐私/批量。</p>
       </div>
       <div class="card">
         <h3>支持 Mac / Linux 吗？</h3>
-        <p>不支持。启动器、嵌入式 Python、安装脚本都是 Windows 专用；其他平台可以直接用 MinerU 本体。</p>
+        <p>不支持。启动器、嵌入式 Python、安装脚本都是 Windows 专用；<br>其他平台可以直接用 MinerU 本体。</p>
       </div>
       <div class="card">
         <h3>更新会不会覆盖配置？</h3>
