@@ -1,0 +1,54 @@
+{
+ "schema": 1,
+ "generated_at": "2026-11-19T13:42:58Z",
+ "ok": true,
+ "gates": {
+  "formula": {
+   "ok": true,
+   "source": {
+    "display_blocks": 6,
+    "inline_dollars": 0
+   },
+   "zh": {
+    "display_blocks": 6,
+    "inline_dollars": 0
+   },
+   "latex_ok": true,
+   "latex_blocks": 6
+  },
+  "image": {
+   "ok": true,
+   "source": 4,
+   "zh": 4
+  },
+  "table": {
+   "ok": true,
+   "tables": 2
+  },
+  "citation": {
+   "ok": true,
+   "source": {
+    "bracket": 5,
+    "fig": 9,
+    "table": 4,
+    "eq": 2
+   },
+   "zh": {
+    "bracket": 5,
+    "fig": 9,
+    "table": 4,
+    "eq": 2
+   },
+   "uids": []
+  },
+  "language": {
+   "ok": true,
+   "latin": 3,
+   "cjk": 3396,
+   "ratio": 0.00088261253309797,
+   "offenders": []
+  }
+ },
+ "issues": [],
+ "notes": []
+}
