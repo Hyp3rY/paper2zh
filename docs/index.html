@@ -121,6 +121,17 @@
   .hint{color:var(--muted);font-size:13px;margin:10px 0 0}
   .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
   .chip{font-size:12.5px;color:var(--muted);border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:4px 10px}
+  .usage-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:26px;align-items:start}
+  .cmd{
+    display:flex;gap:12px;align-items:center;margin:20px 0 22px;
+    padding:16px 16px 16px 20px;border-radius:14px;
+    background:#070b12;border:1px solid rgba(94,234,212,.35);
+  }
+  .cmd code{flex:1;background:none;border:0;padding:0;color:#dbe7f3;font-size:15.5px;white-space:nowrap;overflow:auto}
+  .cmd .btn{padding:9px 15px;white-space:nowrap}
+  .dir-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:20px}
+  .dir-card .label{color:var(--muted);font-size:12.5px;margin-bottom:6px}
+  .dir-card pre{margin:10px 0 0;font-size:13px}
   ul.clean{margin:0;padding-left:20px;color:var(--muted)}
   ul.clean li{margin:7px 0}
   ul.clean b{color:var(--text);font-weight:600}
@@ -132,7 +143,7 @@
   footer{padding:44px 0 60px;color:var(--muted);font-size:13.5px}
   footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:16px}
   @media (max-width:900px){
-    .grid,.steps,.two,.ai-grid{grid-template-columns:1fr}
+    .grid,.steps,.two,.ai-grid,.usage-grid{grid-template-columns:1fr}
     .kvs{grid-template-columns:1fr}
     .hero{padding:56px 0 40px}
     section{padding:48px 0}
@@ -150,7 +161,7 @@
       AI 只负责翻译——最终 Markdown 由 MinerU 渲染器生成，不靠模型“手拼”。
     </p>
     <div class="actions">
-      <a class="btn primary" href="#ai-install">让 AI 帮我装</a>
+      <a class="btn primary" href="#ai-install">让 AI 帮你装</a>
       <a class="btn" href="https://github.com/Hyp3rY/paper2zh/releases/latest">下载安装包</a>
       <a class="btn" href="https://github.com/Hyp3rY/paper2zh">GitHub 仓库</a>
     </div>
@@ -177,7 +188,7 @@
       </p>
       <div class="prompt">
         <code>安装 https://github.com/Hyp3rY/paper2zh</code>
-        <button class="btn primary" id="copy-install" type="button">复制</button>
+        <button class="btn primary" id="copy-install" type="button" data-copy="安装 https://github.com/Hyp3rY/paper2zh">复制</button>
       </div>
       <p class="hint">
         纯聊天窗口没有终端权限，装不了；需要 Claude Code、Codex、Cursor、Gemini CLI、
@@ -200,8 +211,42 @@
         <span class="chip">豆包工作</span>
       </div>
       <p class="hint" style="margin-top:18px">
-        想自己动手？<a href="#manual-install">跳到手动安装</a>。
+        想自己动手？<a href="#manual-install">跳到手动安装</a> ·
+        装好后怎么用？<a href="#usage">往下看 ↓</a>
       </p>
+    </div>
+  </div>
+</section>
+
+<section id="usage">
+  <div class="wrap">
+    <div class="eyebrow"><span class="dot"></span>装好之后 · 两句话</div>
+    <h2>怎么用</h2>
+    <p class="sub">
+      不用记命令：把 PDF 拖进 AI 窗口，或者直接说一句话。产物在 PDF 旁边的
+      「翻译结果」目录，原 PDF 不动。
+    </p>
+    <div class="usage-grid">
+      <div>
+        <div class="cmd">
+          <code>/paper2zh 把 D:\论文\xxx.pdf 翻成中文</code>
+          <button class="btn primary" id="copy-usage" type="button" data-copy="/paper2zh 把 D:\论文\xxx.pdf 翻成中文">复制</button>
+        </div>
+        <ul class="clean">
+          <li><b>先输入 <code>/paper2zh</code></b>，再把 PDF 拖进 AI 窗口，路径会自动带上。</li>
+          <li><b>也可以直接说</b>「用 paper2zh 把 D:\论文\xxx.pdf 翻成中文」，不用敲斜杠。</li>
+          <li><b>等它跑完</b>：会先解析，再逐段翻译，最后自动质检；中途可以看进度。</li>
+        </ul>
+      </div>
+      <div class="dir-card">
+        <div class="label">产物目录（PDF 旁边）</div>
+        <pre><code>翻译结果\xxx\
+├─ zh.md          中文版
+├─ bilingual.md   中英对照
+├─ images\        图片
+├─ qa.json        质检结果
+└─ 先读我.txt      使用说明</code></pre>
+      </div>
     </div>
   </div>
 </section>
@@ -398,31 +443,35 @@
 
 <script>
   (function () {
-    var button = document.getElementById('copy-install');
-    if (!button) return;
-    button.addEventListener('click', function () {
-      var text = '安装 https://github.com/Hyp3rY/paper2zh';
-      function done() {
-        button.textContent = '已复制';
-        setTimeout(function () { button.textContent = '复制'; }, 1500);
-      }
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(text).then(done).catch(fallback);
-      } else {
-        fallback();
-      }
-      function fallback() {
-        var area = document.createElement('textarea');
-        area.value = text;
-        area.style.position = 'fixed';
-        area.style.opacity = '0';
-        document.body.appendChild(area);
-        area.select();
-        try { document.execCommand('copy'); done(); }
-        catch (e) { button.textContent = '请手动复制'; }
-        document.body.removeChild(area);
-      }
-    });
+    function wireCopy(id) {
+      var button = document.getElementById(id);
+      if (!button) return;
+      button.addEventListener('click', function () {
+        var text = button.getAttribute('data-copy') || '';
+        function done() {
+          button.textContent = '已复制';
+          setTimeout(function () { button.textContent = '复制'; }, 1500);
+        }
+        function fallback() {
+          var area = document.createElement('textarea');
+          area.value = text;
+          area.style.position = 'fixed';
+          area.style.opacity = '0';
+          document.body.appendChild(area);
+          area.select();
+          try { document.execCommand('copy'); done(); }
+          catch (e) { button.textContent = '请手动复制'; }
+          document.body.removeChild(area);
+        }
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(done).catch(fallback);
+        } else {
+          fallback();
+        }
+      });
+    }
+    wireCopy('copy-install');
+    wireCopy('copy-usage');
   })();
 </script>
 
