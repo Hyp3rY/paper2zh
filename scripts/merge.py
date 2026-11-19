@@ -108,9 +108,15 @@ def stitch_continuations(mj, translations: dict[str, str], *, bilingual: bool,
         while cursor < len(order):
             next_page, next_index, next_block = order[cursor]
             # 页眉、页码、页脚、侧边水印不渲染，直接跳过继续看下一块
+            if getattr(next_block, "type", None) == "equation":
+                break
             if getattr(next_block, "type", None) in (middle.SKIP_BLOCK_TYPES | {"header"}):
                 cursor += 1
                 continue
+            # 不要跨公式/图片/表格拼接文本块：否则前面的文本会被合成一大段，
+            # 公式反而被挤到整段之后。
+            if getattr(next_block, "type", None) not in {"text", "caption"}:
+                break
             next_source = _paragraph_source(next_block, sources, (next_page, next_index))
             if not next_source:
                 break

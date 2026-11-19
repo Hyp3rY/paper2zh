@@ -1,13 +1,13 @@
 # 构建轻包（Windows）：runtime + skill + 启动器，约 50 MB。
 #
-#   pwsh -File build\build_light.ps1 [-Version 1.2.0] [-OutDir build\out] [-SkipZip]
+#   pwsh -File build\build_light.ps1 [-Version 1.2.1] [-OutDir build\out] [-SkipZip]
 #
 # 轻包里只有两样「大」东西：嵌入式 Python 与源码。模型和 site-packages 里的
 # 依赖不进来（site-packages 反而要进来——它才是依赖本体）；模型由
 # 「1-开始安装.cmd」在用户机器上下载。
 
 param(
-    [string]$Version = "1.2.0",
+    [string]$Version = "1.2.1",
     [string]$OutDir = "",
     [switch]$SkipZip
 )
