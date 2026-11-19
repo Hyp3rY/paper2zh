@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>paper2zh — 英文论文 PDF 转中文 Markdown</title>
+<meta name="description" content="paper2zh：Windows 上把英文论文 PDF 转成中文 Markdown，公式仍是公式、图片还在原位、表格不散架。本地 MinerU 解析，可用当前 AI 模型或本机 LM Studio 翻译。">
+<style>
+  :root{
+    --bg:#0b0f17;
+    --panel:#121826;
+    --panel-2:#0f1522;
+    --text:#e8edf5;
+    --muted:#9aa7b8;
+    --line:rgba(255,255,255,.09);
+    --brand:#5eead4;
+    --brand-2:#38bdf8;
+    --warn:#fbbf24;
+    --radius:16px;
+    --max:1080px;
+  }
+  @media (prefers-color-scheme: light){
+    :root{
+      --bg:#f6f8fb;
+      --panel:#ffffff;
+      --panel-2:#f1f5f9;
+      --text:#0f172a;
+      --muted:#536173;
+      --line:rgba(15,23,42,.10);
+      --brand:#0f766e;
+      --brand-2:#0284c7;
+      --warn:#b45309;
+    }
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0;background:var(--bg);color:var(--text);
+    font:16px/1.75 -apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif;
+  }
+  a{color:var(--brand-2);text-decoration:none}
+  a:hover{text-decoration:underline}
+  .wrap{max-width:var(--max);margin:0 auto;padding:0 22px}
+  .hero{
+    padding:80px 0 56px;
+    background:
+      radial-gradient(900px 420px at 12% -10%, rgba(94,234,212,.16), transparent 60%),
+      radial-gradient(760px 380px at 92% 0%, rgba(56,189,248,.14), transparent 62%);
+    border-bottom:1px solid var(--line);
+  }
+  .eyebrow{
+    display:inline-flex;align-items:center;gap:8px;
+    font-size:13px;color:var(--muted);
+    border:1px solid var(--line);border-radius:999px;padding:5px 12px;
+    background:rgba(255,255,255,.03);
+  }
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--brand);box-shadow:0 0 12px var(--brand)}
+  h1{font-size:clamp(38px,6vw,64px);line-height:1.08;margin:22px 0 14px;letter-spacing:-.02em}
+  h1 span{background:linear-gradient(100deg,var(--brand),var(--brand-2));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .lede{font-size:clamp(17px,2.2vw,20px);color:var(--muted);max-width:760px;margin:0 0 26px}
+  .actions{display:flex;flex-wrap:wrap;gap:12px;margin:28px 0 10px}
+  .btn{
+    display:inline-flex;align-items:center;gap:8px;
+    padding:12px 18px;border-radius:12px;font-weight:650;font-size:15px;
+    border:1px solid var(--line);background:var(--panel);color:var(--text);
+    transition:.15s ease;
+  }
+  .btn:hover{text-decoration:none;transform:translateY(-1px);border-color:rgba(94,234,212,.45)}
+  .btn.primary{background:linear-gradient(100deg,var(--brand),var(--brand-2));color:#06221f;border:0}
+  .btn.primary:hover{filter:brightness(1.06)}
+  .hero-meta{display:flex;flex-wrap:wrap;gap:18px;color:var(--muted);font-size:13.5px;margin-top:18px}
+  .hero-meta b{color:var(--text);font-weight:600}
+  section{padding:64px 0;border-bottom:1px solid var(--line)}
+  h2{font-size:clamp(24px,3vw,32px);margin:0 0 10px;letter-spacing:-.01em}
+  .sub{color:var(--muted);margin:0 0 30px;max-width:760px}
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  .card{
+    background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+    padding:22px;min-height:150px;
+  }
+  .card .ico{font-size:22px;line-height:1;margin-bottom:12px}
+  .card h3{margin:0 0 8px;font-size:16.5px}
+  .card p{margin:0;color:var(--muted);font-size:14.5px}
+  .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;counter-reset:step}
+  .step{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:22px;position:relative}
+  .step::before{
+    counter-increment:step;content:counter(step);
+    display:grid;place-items:center;width:28px;height:28px;border-radius:9px;
+    background:rgba(94,234,212,.12);color:var(--brand);font-weight:700;font-size:14px;margin-bottom:14px;
+  }
+  .step h3{margin:0 0 8px;font-size:16px}
+  .step p{margin:0;color:var(--muted);font-size:14.5px}
+  code,kbd{
+    font-family:ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",monospace;
+    font-size:.92em;background:var(--panel-2);border:1px solid var(--line);
+    border-radius:7px;padding:2px 6px;
+  }
+  pre{
+    background:#070b12;color:#dbe7f3;border:1px solid var(--line);border-radius:12px;
+    padding:16px 18px;overflow:auto;font-size:13.5px;line-height:1.7;
+  }
+  pre code{background:none;border:0;padding:0;color:inherit}
+  table{width:100%;border-collapse:collapse;font-size:14.5px;background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  th,td{padding:12px 14px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+  th{color:var(--muted);font-weight:600;background:var(--panel-2);font-size:13px}
+  tr:last-child td{border-bottom:0}
+  .note{
+    border-left:3px solid var(--warn);background:rgba(251,191,36,.07);
+    padding:14px 16px;border-radius:0 10px 10px 0;color:var(--muted);font-size:14.5px;margin:22px 0 0;
+  }
+  .two{display:grid;grid-template-columns:1.05fr .95fr;gap:28px;align-items:start}
+  ul.clean{margin:0;padding-left:20px;color:var(--muted)}
+  ul.clean li{margin:7px 0}
+  ul.clean b{color:var(--text);font-weight:600}
+  .kvs{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+  .kv{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+  .kv .k{color:var(--muted);font-size:12.5px;margin-bottom:4px}
+  .kv .v{font-weight:600;font-size:15px}
+  .links{display:flex;flex-wrap:wrap;gap:10px 20px;margin-top:16px;font-size:14px}
+  footer{padding:44px 0 60px;color:var(--muted);font-size:13.5px}
+  footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:16px}
+  @media (max-width:900px){
+    .grid,.steps,.two{grid-template-columns:1fr}
+    .kvs{grid-template-columns:1fr}
+    .hero{padding:56px 0 40px}
+    section{padding:48px 0}
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow"><span class="dot"></span>Windows 10 / 11 · 本地解析 · 不调用云解析服务</div>
+    <h1>英文论文 PDF<br><span>转成中文 Markdown</span></h1>
+    <p class="lede">
+      公式还是公式，图片还在原位，表格不散架。MinerU 负责解析与回填，
+      AI 只负责翻译——最终 Markdown 由官方渲染器生成，不靠模型“手拼”。
+    </p>
+    <div class="actions">
+      <a class="btn primary" href="https://github.com/Hyp3rY/paper2zh/releases/latest">下载最新版</a>
+      <a class="btn" href="https://github.com/Hyp3rY/paper2zh">GitHub 仓库</a>
+      <a class="btn" href="https://github.com/Hyp3rY/paper2zh/blob/main/AI-INSTALL.md">让 AI 帮我装</a>
+    </div>
+    <div class="hero-meta">
+      <span><b>v1.2.0</b> · MIT</span>
+      <span><b>12.6 MB</b> 轻量包</span>
+      <span><b>2.8 GB</b> 装完占用</span>
+      <span>支持 Claude Code / Codex / Cursor / DSH / WorkBuddy / 豆包</span>
+    </div>
+  </div>
+</header>
+
+<main>
+
+<section>
+  <div class="wrap">
+    <h2>为什么不是“又一个 PDF 翻译器”</h2>
+    <p class="sub">让 AI 直接读 PDF，它往往会现场写脚本、反复试错，最后公式、图片、表格还容易坏。这个项目把活拆成两半：</p>
+    <div class="grid">
+      <div class="card">
+        <div class="ico">🧩</div>
+        <h3>确定性的事交给脚本</h3>
+        <p>解析、切块、公式保护、回填、渲染、质检，全部是本地脚本；同一份 PDF 每次结果一致。</p>
+      </div>
+      <div class="card">
+        <div class="ico">🧠</div>
+        <h3>翻译交给 AI</h3>
+        <p>AI 拿到的是一份切好块、公式已经保护好的段落清单，只负责翻译和判断，不碰排版。</p>
+      </div>
+      <div class="card">
+        <div class="ico">🔒</div>
+        <h3>不联网解析</h3>
+        <p>MinerU 在本机跑，PDF 不上传；翻译可以用当前 AI，也可以切到本机 LM Studio。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>三分钟上手</h2>
+    <p class="sub">不需要命令行基础。下载、解压、双击，然后对 AI 说一句话。</p>
+    <div class="steps">
+      <div class="step">
+        <h3>下载并解压</h3>
+        <p>推荐 <b>lite 包</b>（12.6 MB），解压到纯英文路径，例如 <code>D:\Tools\paper2zh</code>。</p>
+      </div>
+      <div class="step">
+        <h3>双击安装</h3>
+        <p>运行 <code>1-开始安装.cmd</code>，等 5–10 分钟。中断了再双击一次，会接着装。</p>
+      </div>
+      <div class="step">
+        <h3>跟 AI 说话</h3>
+        <p>把 PDF 路径发给 AI，说「用 paper2zh 翻成中文」。产物在 PDF 旁边的「翻译结果」目录。</p>
+      </div>
+    </div>
+
+    <pre><code>/paper2zh 把 D:\论文\xxx.pdf 翻成中文</code></pre>
+
+    <div class="note">
+      纯聊天 AI 没有终端权限，装不了；需要 Claude Code、Codex、Cursor、DSH、WorkBuddy、豆包工作等
+      能执行本机命令的客户端。
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>它保住了什么</h2>
+    <p class="sub">不是“看起来差不多”，而是结构级保真，再由五道质检兜底。</p>
+    <div class="two">
+      <ul class="clean">
+        <li><b>公式</b>：行内/行间公式数量、顺序、内容逐条比对，转成 Word 时变成 OMML 原生公式。</li>
+        <li><b>图片</b>：按原版面宽度嵌入，路径全部校验；多子图会合成表格，图注归位。</li>
+        <li><b>表格</b>：保留行列结构，不把表格拍成图片。</li>
+        <li><b>引用</b>：括号引用、图、表、公式编号对齐检查。</li>
+        <li><b>断点续译</b>：中断后从上次的位置继续，已翻段落不重发。</li>
+      </ul>
+      <div class="kvs">
+        <div class="kv"><div class="k">质检项</div><div class="v">公式 / 图片 / 表格 / 引用 / 语言</div></div>
+        <div class="kv"><div class="k">输出</div><div class="v">zh.md · bilingual.md · qa.json</div></div>
+        <div class="kv"><div class="k">可选 Word</div><div class="v">zh.docx · bilingual.docx</div></div>
+        <div class="kv"><div class="k">解析引擎</div><div class="v">MinerU 4.2.x（本地）</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>在线、本地，怎么选</h2>
+    <p class="sub">同一个工具，两种翻译方式；不是所有人都需要本地模型。</p>
+    <table>
+      <thead><tr><th>方式</th><th>适合</th><th>成本参考（18 页）</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><b>当前 AI 模型</b><br><span style="color:var(--muted)">Claude / Codex / DeepSeek …</span></td>
+          <td>单篇、赶时间、想要更稳的初稿</td>
+          <td>约 ¥0.23（谷时）</td>
+        </tr>
+        <tr>
+          <td><b>本机 LM Studio</b><br><span style="color:var(--muted)">Qwen3.5-9B Q4 等</span></td>
+          <td>离线、隐私、批量、愿意校订</td>
+          <td>约 ¥0.06（谷时）+ 4 分钟</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="note">
+      本地 9B 的译文可读、公式数字完整，但术语会漂、作者名可能被音译、少量直译；
+      新版会自动统一术语、恢复作者原名，语义仍需人工抽查。
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>下载</h2>
+    <p class="sub">都在 GitHub Releases，校验和与更新日志见 Release 页面。</p>
+    <table>
+      <thead><tr><th>文件</th><th>大小</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><code>paper2zh-v1.2.0-win-x64-lite.zip</code></td>
+          <td>12.6 MB</td>
+          <td><b>推荐</b>。首次使用联网下载依赖与模型</td>
+        </tr>
+        <tr>
+          <td><code>paper2zh-v1.2.0-win-x64-full.zip</code></td>
+          <td>1.94 GB</td>
+          <td>完整离线包，断网环境用</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="actions" style="margin-top:22px">
+      <a class="btn primary" href="https://github.com/Hyp3rY/paper2zh/releases/latest">前往 Releases</a>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>系统要求</h2>
+    <div class="kvs">
+      <div class="kv"><div class="k">系统</div><div class="v">Windows 10 / 11，64 位</div></div>
+      <div class="kv"><div class="k">内存</div><div class="v">8 GB 起，推荐 16 GB</div></div>
+      <div class="kv"><div class="k">磁盘</div><div class="v">剩余 ≥ 6 GB，装完约 2.8 GB</div></div>
+      <div class="kv"><div class="k">显卡</div><div class="v">可选；CPU 也能跑</div></div>
+      <div class="kv"><div class="k">本地模型</div><div class="v">LM Studio + 8 GB 显存更稳</div></div>
+      <div class="kv"><div class="k">管理员权限</div><div class="v">不需要</div></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>常见问题</h2>
+    <div class="grid">
+      <div class="card">
+        <h3>会改坏我的 PDF 吗？</h3>
+        <p>不会。只读 PDF，所有产物写到「翻译结果」目录，原文件不动。</p>
+      </div>
+      <div class="card">
+        <h3>扫描件能翻吗？</h3>
+        <p>能解析，但清晰度决定识别质量。建议翻完先核对前两页；纯图片、无文字层的文档效果有限。</p>
+      </div>
+      <div class="card">
+        <h3>参考文献会翻吗？</h3>
+        <p>不会，保留原文。代码块同样保留。</p>
+      </div>
+      <div class="card">
+        <h3>一定要装本地模型吗？</h3>
+        <p>不用。默认用当前 AI 模型；本地模型只是可选项，适合离线/隐私/批量。</p>
+      </div>
+      <div class="card">
+        <h3>支持 Mac / Linux 吗？</h3>
+        <p>不支持。启动器、嵌入式 Python、安装脚本都是 Windows 专用；其他平台可以直接用 MinerU 本体。</p>
+      </div>
+      <div class="card">
+        <h3>更新会不会覆盖配置？</h3>
+        <p>不会。装 skill 时只更新程序文件，配置和已翻译产物保留。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <div>
+      <div><b style="color:var(--text)">paper2zh</b> · MIT License</div>
+      <div style="margin-top:6px">解析能力来自 <a href="https://github.com/opendatalab/MinerU">MinerU</a>。非官方项目，与其无隶属关系。</div>
+    </div>
+    <div class="links">
+      <a href="https://github.com/Hyp3rY/paper2zh">GitHub</a>
+      <a href="https://github.com/Hyp3rY/paper2zh/releases">Releases</a>
+      <a href="https://github.com/Hyp3rY/paper2zh/issues">Issues</a>
+      <a href="https://github.com/Hyp3rY/paper2zh/blob/main/README.md">README</a>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
