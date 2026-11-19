@@ -51,9 +51,9 @@ qa.json          自动检查结果
 [本地 9B 版](samples/demo-paper/翻译结果/demo-paper-local/bilingual.md) ·
 [样本说明与复现步骤](samples/demo-paper/README.md)
 
-![原 PDF / 在线 / 本地对比](samples/demo-paper/preview-comparison.png)
+![原 PDF / 在线 / 本地对比](samples/demo-paper/preview-comparison.webp)
 
-![图与公式细节](samples/demo-paper/preview-detail.png)
+![图与公式细节](samples/demo-paper/preview-detail.webp)
 
 > 两份译文都通过了公式、图片、表格、引用、语言五项质检。
 > 在线版 77 段一次收齐；本地 9B 首轮退回 2 段（把 Unicode 数学符号改成了 `$...$`），补交后通过。

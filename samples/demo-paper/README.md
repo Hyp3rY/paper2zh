@@ -23,8 +23,8 @@
 | `preview-source.png` | PDF 第 1 页的截图 |
 | `preview-online.png` | 在线模型 `bilingual.md` 的渲染截图 |
 | `preview-local.png` | 本地 9B `bilingual.md` 的渲染截图 |
-| `preview-comparison.png` | 原 PDF / 在线 / 本地 三列对比 |
-| `preview-detail.png` | 插图和公式的放大细节对比 |
+| `preview-comparison.webp` | 原 PDF / 在线 / 本地 三列对比 |
+| `preview-detail.webp` | 插图和公式的放大细节对比 |
 | `翻译结果/demo-paper/bilingual.md` | 在线模型输出的中英对照 |
 | `翻译结果/demo-paper-local/bilingual.md` | 本地 Qwen3.5-9B Q4 输出的中英对照 |
 
@@ -38,11 +38,11 @@
 
 整体对比（左：原 PDF；中：在线模型；右：本地 9B）：
 
-![原 PDF / 在线 / 本地对比](preview-comparison.png)
+![原 PDF / 在线 / 本地对比](preview-comparison.webp)
 
 插图和公式放大：
 
-![插图和公式细节](preview-detail.png)
+![插图和公式细节](preview-detail.webp)
 
 ## 怎么复现
 
