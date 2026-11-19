@@ -109,6 +109,18 @@
     padding:14px 16px;border-radius:0 10px 10px 0;color:var(--muted);font-size:14.5px;margin:22px 0 0;
   }
   .two{display:grid;grid-template-columns:1.05fr .95fr;gap:28px;align-items:start}
+  .ai-band{background:linear-gradient(120deg,rgba(94,234,212,.10),rgba(56,189,248,.06))}
+  .ai-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:34px;align-items:center}
+  .prompt{
+    display:flex;gap:10px;align-items:center;margin:18px 0 8px;
+    padding:10px 10px 10px 14px;border:1px solid rgba(94,234,212,.35);
+    background:var(--panel-2);border-radius:12px;
+  }
+  .prompt code{flex:1;background:none;border:0;padding:0;color:var(--text);font-size:14px;white-space:nowrap;overflow:auto}
+  .prompt .btn{padding:9px 14px;white-space:nowrap}
+  .hint{color:var(--muted);font-size:13px;margin:10px 0 0}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+  .chip{font-size:12.5px;color:var(--muted);border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:4px 10px}
   ul.clean{margin:0;padding-left:20px;color:var(--muted)}
   ul.clean li{margin:7px 0}
   ul.clean b{color:var(--text);font-weight:600}
@@ -120,7 +132,7 @@
   footer{padding:44px 0 60px;color:var(--muted);font-size:13.5px}
   footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:16px}
   @media (max-width:900px){
-    .grid,.steps,.two{grid-template-columns:1fr}
+    .grid,.steps,.two,.ai-grid{grid-template-columns:1fr}
     .kvs{grid-template-columns:1fr}
     .hero{padding:56px 0 40px}
     section{padding:48px 0}
@@ -138,9 +150,9 @@
       AI 只负责翻译——最终 Markdown 由官方渲染器生成，不靠模型“手拼”。
     </p>
     <div class="actions">
-      <a class="btn primary" href="https://github.com/Hyp3rY/paper2zh/releases/latest">下载最新版</a>
+      <a class="btn primary" href="#ai-install">让 AI 帮我装</a>
+      <a class="btn" href="https://github.com/Hyp3rY/paper2zh/releases/latest">下载安装包</a>
       <a class="btn" href="https://github.com/Hyp3rY/paper2zh">GitHub 仓库</a>
-      <a class="btn" href="https://github.com/Hyp3rY/paper2zh/blob/main/AI-INSTALL.md">让 AI 帮我装</a>
     </div>
     <div class="hero-meta">
       <span><b>v1.2.0</b> · MIT</span>
@@ -152,6 +164,47 @@
 </header>
 
 <main>
+
+<section id="ai-install" class="ai-band">
+  <div class="wrap ai-grid">
+    <div>
+      <div class="eyebrow"><span class="dot"></span>推荐方式 · 不需要命令行</div>
+      <h2>让 AI 帮你装</h2>
+      <p class="sub">
+        把下面这句话发给你正在用的 AI。它会自己读仓库里的
+        <a href="https://github.com/Hyp3rY/paper2zh/blob/main/AI-INSTALL.md">AI-INSTALL.md</a>，
+        去最新 Release 下载轻包、解压、安装并自检，全程不用你动手。
+      </p>
+      <div class="prompt">
+        <code>安装 https://github.com/Hyp3rY/paper2zh</code>
+        <button class="btn primary" id="copy-install" type="button">复制</button>
+      </div>
+      <p class="hint">
+        纯聊天窗口没有终端权限，装不了；需要 Claude Code、Codex、Cursor、Gemini CLI、
+        DSH、WorkBuddy、豆包工作等能执行本机命令的客户端。
+      </p>
+    </div>
+    <div>
+      <ul class="clean">
+        <li><b>自动找最新包</b>：不用记版本号，它自己查 Release。</li>
+        <li><b>依赖和模型一次装好</b>：解压、安装、注册 skill 全自动。</li>
+        <li><b>装完逐项自检</b>：环境、模型、客户端，有问题会告诉你。</li>
+      </ul>
+      <div class="chips">
+        <span class="chip">Claude Code</span>
+        <span class="chip">Codex</span>
+        <span class="chip">Cursor</span>
+        <span class="chip">Gemini CLI</span>
+        <span class="chip">DSH</span>
+        <span class="chip">WorkBuddy</span>
+        <span class="chip">豆包工作</span>
+      </div>
+      <p class="hint" style="margin-top:18px">
+        想自己动手？<a href="#manual-install">跳到手动安装</a>。
+      </p>
+    </div>
+  </div>
+</section>
 
 <section>
   <div class="wrap">
@@ -177,10 +230,10 @@
   </div>
 </section>
 
-<section>
+<section id="manual-install">
   <div class="wrap">
-    <h2>三分钟上手</h2>
-    <p class="sub">不需要命令行基础。下载、解压、双击，然后对 AI 说一句话。</p>
+    <h2>手动安装（备选）</h2>
+    <p class="sub">不想让 AI 代劳，或客户端不能执行命令，就走这条。下载、解压、双击，然后对 AI 说一句话。</p>
     <div class="steps">
       <div class="step">
         <h3>下载并解压</h3>
@@ -249,6 +302,8 @@
     <div class="note">
       本地 9B 的译文可读、公式数字完整，但术语会漂、作者名可能被音译、少量直译；
       新版会自动统一术语、恢复作者原名，语义仍需人工抽查。
+      <br>实测配置：RTX 2070 Laptop，Qwen3.5-9B Q4，上下文 19831，Top P 0.2，
+      Presence Penalty 0.2，约 40 tok/s。
     </div>
   </div>
 </section>
@@ -340,6 +395,36 @@
     </div>
   </div>
 </footer>
+
+<script>
+  (function () {
+    var button = document.getElementById('copy-install');
+    if (!button) return;
+    button.addEventListener('click', function () {
+      var text = '安装 https://github.com/Hyp3rY/paper2zh';
+      function done() {
+        button.textContent = '已复制';
+        setTimeout(function () { button.textContent = '复制'; }, 1500);
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done).catch(fallback);
+      } else {
+        fallback();
+      }
+      function fallback() {
+        var area = document.createElement('textarea');
+        area.value = text;
+        area.style.position = 'fixed';
+        area.style.opacity = '0';
+        document.body.appendChild(area);
+        area.select();
+        try { document.execCommand('copy'); done(); }
+        catch (e) { button.textContent = '请手动复制'; }
+        document.body.removeChild(area);
+      }
+    });
+  })();
+</script>
 
 </body>
 </html>
