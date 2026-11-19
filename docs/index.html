@@ -145,6 +145,7 @@
   ul.clean b{color:var(--text);font-weight:600}
   .kvs{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
   .two .kvs{grid-template-columns:1fr}
+  #preserved .kvs{margin-top:-14px}
   .kv{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
   .kv .k{color:var(--muted);font-size:12.5px;margin-bottom:4px}
   .kv .v{font-weight:600;font-size:15px}
@@ -155,6 +156,7 @@
     .grid,.steps,.two,.ai-grid,.usage-grid{grid-template-columns:1fr}
     .steps.two-steps{grid-template-columns:1fr}
     .kvs{grid-template-columns:1fr}
+    #preserved .kvs{margin-top:0}
     .hero{padding:56px 0 40px}
     section{padding:48px 0}
   }
@@ -302,7 +304,7 @@
   </div>
 </section>
 
-<section>
+<section id="preserved">
   <div class="wrap">
     <h2>它保住了什么</h2>
     <p class="sub">不是“看起来差不多”，而是结构级保真，再由五道质检兜底。</p>
