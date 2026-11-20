@@ -1,6 +1,6 @@
 # 构建完整离线包（Windows）：轻包 + 依赖 site-packages + 模型。
 #
-#   pwsh -File build\build_full.ps1 [-Version 1.2.1] [-OutDir build\out] [-SkipZip]
+#   pwsh -File build\build_full.ps1 [-Version 1.2.2] [-OutDir build\out] [-SkipZip]
 #
 # 完整包给完全断网的内网用：解压 → 双击 1-开始安装.cmd（会跳过已就绪的步骤）
 # → 双击 1-开始安装.cmd（会自动装进 AI 工具并自检）。约 3 GB。
@@ -9,7 +9,7 @@
 # home\tier.txt 都是「这台机器」的，换机必须重新生成。
 
 param(
-    [string]$Version = "1.2.1",
+    [string]$Version = "1.2.2",
     [string]$OutDir = "",
     [switch]$SkipZip
 )

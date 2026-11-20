@@ -240,6 +240,37 @@ AI 回复「正在本地解析」就说明技能已加载。
     (workdir / "先读我.txt").write_text(text, encoding="utf-8")
 
 
+ZH_OUTPUT = "中文版.md"
+BI_OUTPUT = "中英对照.md"
+
+
+def rename_outputs(workdir: Path) -> list[str]:
+    """把内部使用的 zh.md / bilingual.md 换成给人看的中文名。
+
+    只在 finish / export 的所有检查、Word 导出完成后调用，避免 QA 和
+    export 找不到旧文件名。先读我.txt 里的文件名也一并替换。
+    """
+    workdir = Path(workdir)
+    pairs = [("zh.md", ZH_OUTPUT), ("bilingual.md", BI_OUTPUT)]
+    renamed: list[str] = []
+    for old_name, new_name in pairs:
+        old = workdir / old_name
+        new = workdir / new_name
+        if not old.is_file():
+            continue
+        if new.exists():
+            new.unlink()
+        old.replace(new)
+        renamed.append(new_name)
+
+    readme = workdir / "先读我.txt"
+    if readme.is_file():
+        text = readme.read_text(encoding="utf-8")
+        text = text.replace("zh.md", ZH_OUTPUT).replace("bilingual.md", BI_OUTPUT)
+        readme.write_text(text, encoding="utf-8")
+    return renamed
+
+
 def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(
         description="把译文回填进 middle_json 并渲染成中文 markdown",
@@ -359,8 +390,8 @@ def main(argv: list[str]) -> int:
         paths.say(f"[合并] 跨块断句：接回 {merged_zh} 处（PAPER2ZH_STITCH=0 可关）")
     if grid_stats.get("groups"):
         paths.say(f"[合并] 多子图排版：{grid_stats['groups']} 组 / {grid_stats['cells']} 张子图已按原版面合成表格")
-    paths.say(f"[合并] zh.md：{len(zh_md)} 字符")
-    paths.say(f"[合并] bilingual.md：{len(bilingual_md)} 字符")
+    paths.say(f"[合并] 中文正文：{len(zh_md)} 字符")
+    paths.say(f"[合并] 中英对照：{len(bilingual_md)} 字符")
     paths.say(f"[合并] 产物目录：{workdir}")
     return paths.EXIT_OK
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Render the two zh.md outputs to standalone HTML for screenshots.
+"""Render the two Chinese/bilingual outputs to standalone HTML for screenshots.
 
 LaTeX is converted to MathML locally (latex2mathml), so the preview works
 without a CDN. Images use a <base> pointing at the original workdir.
@@ -99,5 +99,5 @@ def render(md_path: Path, workdir: Path, badge: str) -> Path:
 if __name__ == "__main__":
     online = HERE / "翻译结果" / "demo-paper"
     local = HERE / "翻译结果" / "demo-paper-local"
-    print(render(online / "bilingual.md", online, "在线模型 · DeepSeek V4.1 Flash · 双语"))
-    print(render(local / "bilingual.md", local, "本地 9B · Qwen3.5-9B Q4 · 双语"))
+    print(render(online / "中英对照.md", online, "在线模型 · DeepSeek V4.1 Flash · 双语"))
+    print(render(local / "中英对照.md", local, "本地 9B · Qwen3.5-9B Q4 · 双语"))

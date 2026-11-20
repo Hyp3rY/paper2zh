@@ -11,7 +11,7 @@
 - 4 张位图：框图、折线图、柱状图、热力图；
 - 2 张带拆分表头的表格；
 - 行内数学符号；
-- 在线版和本地 9B 版都保留双语对照（`bilingual.md`）。
+- 在线版和本地 9B 版都保留双语对照（`中英对照.md`）。
 
 ## 文件说明
 
@@ -21,12 +21,12 @@
 | `make_figures.py` | 用 Pillow 生成四张插图 |
 | `demo-paper.pdf` | 生成出来的 4 页 PDF |
 | `preview-source.png` | PDF 第 1 页的截图 |
-| `preview-online.png` | 在线模型 `bilingual.md` 的渲染截图 |
-| `preview-local.png` | 本地 9B `bilingual.md` 的渲染截图 |
+| `preview-online.png` | 在线模型 `中英对照.md` 的渲染截图 |
+| `preview-local.png` | 本地 9B `中英对照.md` 的渲染截图 |
 | `preview-comparison.webp` | 原 PDF / 在线 / 本地 三列对比 |
 | `preview-detail.webp` | 插图和公式的放大细节对比 |
-| `翻译结果/demo-paper/bilingual.md` | 在线模型输出的中英对照 |
-| `翻译结果/demo-paper-local/bilingual.md` | 本地 Qwen3.5-9B Q4 输出的中英对照 |
+| `翻译结果/demo-paper/中英对照.md` | 在线模型输出的中英对照 |
+| `翻译结果/demo-paper-local/中英对照.md` | 本地 Qwen3.5-9B Q4 输出的中英对照 |
 
 两份译文都通过了公式、图片、表格、引用、语言五项质检。
 
@@ -67,7 +67,7 @@ paper2zh.cmd local --workdir "<本地副本>" --model "qwen/qwen3.5-9b" --limit 
 paper2zh.cmd finish --workdir "<本地副本>"
 ```
 
-截图用的预览 HTML 由 `make_preview.py` 从 `bilingual.md` 生成，
+截图用的预览 HTML 由 `make_preview.py` 从 `中英对照.md` 生成，
 使用 `latex2mathml` + `markdown-it`，不依赖外部 CDN。
 
 ## 说明

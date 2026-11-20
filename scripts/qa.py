@@ -282,12 +282,15 @@ def main(argv: list[str]) -> int:
 
     source_dir = workdir / "source"
     source_md = read(source_dir / "markdown.md")
-    zh_md = read(workdir / "zh.md")
+    zh_path = workdir / "中文版.md"
+    if not zh_path.is_file():
+        zh_path = workdir / "zh.md"
+    zh_md = read(zh_path)
     if not source_md:
         paths.fail(paths.EXIT_PARSE_FAILED, "找不到原始解析结果 source/markdown.md",
                    "先跑解析（prepare）。")
     if not zh_md:
-        paths.fail(paths.EXIT_QA_FAILED, "还没有 zh.md，没法质检", "先跑合并（merge）。")
+        paths.fail(paths.EXIT_QA_FAILED, "还没有中文版.md（或旧名 zh.md），没法质检", "先跑合并（merge）。")
 
     source_mj = middle.load_middle(source_dir / "middle_json.json")
 

@@ -147,11 +147,33 @@ Test-Path (Join-Path $root "home\.warmed")   # True 表示装完
 /paper2zh 把 D:\论文\xxx.pdf 翻成中文
 ```
 
-产物在 PDF 旁边的 `翻译结果\<文件名>\`：`zh.md`、`bilingual.md`、`images\`、`qa.json`、`先读我.txt`。
+产物在 PDF 旁边的 `翻译结果\<文件名>\`：`中文版.md`、`中英对照.md`、`images\`、`qa.json`、`先读我.txt`。
 
 ---
 
-## 六、给 AI 的汇报模板
+## 六、升级旧版本
+
+paper2zh **没有自动升级**。升级时不要覆盖旧目录，建议按下面做：
+
+1. 按第一、二节下载并解压**最新** lite 包到一个新目录，例如 `D:\Tools\paper2zh-<新版本>`；
+2. 在新目录里再跑一次安装：
+
+   ```powershell
+   $python = Join-Path $root "runtime\python\python.exe"
+   $script = Join-Path $root "skill\paper2zh\scripts\bootstrap.py"
+   & $python $script all
+   ```
+
+   它会重新登记 skill，覆盖旧的 skill 文件；`%USERPROFILE%\.paper2zh` 里的配置和已有的「翻译结果」不会动；
+3. 运行 `doctor.py --json` 自检；
+4. 确认新版本可用后，再删除旧目录。
+
+如果确实要换到原目录：先关闭旧目录里正在运行的程序，把新版解压覆盖进去，再执行一次 `bootstrap.py all`。
+
+> 旧版本留下的 `中文版.md` / `中英对照.md` 不会被自动改名；新版本 `finish` 后产出 `中文版.md` / `中英对照.md`。
+> 升级只换程序文件，不动用户已经翻好的内容。
+
+## 七、给 AI 的汇报模板
 
 ```text
 安装完成（耗时 X 分 Y 秒）：

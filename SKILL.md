@@ -260,7 +260,7 @@ paper2zh.cmd local --workdir "<产物目录>" --model "qwen/qwen3.5-9b" --limit 
 paper2zh.cmd finish --workdir "<产物目录>"
 ```
 
-产出：`zh.md`（纯中文）、`bilingual.md`（段落英中交替）、`qa.json`、`先读我.txt`；
+产出：`中文版.md`（纯中文）、`中英对照.md`（段落英中交替）、`qa.json`、`先读我.txt`；
 加 `--docx` 会多出两份 Word：`zh.docx` 与 `bilingual.docx`（公式转 OMML、图片内嵌，可直接编辑）。
 事后想补，用 `paper2zh.cmd export --workdir "<产物目录>"`，不必重新质检。
 
@@ -377,4 +377,4 @@ paper2zh.cmd finish --workdir "<产物目录>" --out "<产物目录>\finish.json
 - 多子图（`(a)`、`(b)`…）会按原版面合成为 HTML 表格，不会排成一列；
   关掉用 `PAPER2ZH_FIGURE_GRID=0`；
   需要纯 Markdown 语法时设 `PAPER2ZH_PLAIN_IMAGES=1` 重新 `finish`。
-- 大段长文翻译时，`bilingual.md` 会比 `zh.md` 大 2–3 倍。
+- 大段长文翻译时，`中英对照.md` 会比 `中文版.md` 大 2–3 倍。

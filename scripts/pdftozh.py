@@ -5,7 +5,7 @@
     prepare <pdf>        解析 PDF、切块（会按硬件自动选档位）
     next                 取出还没翻的段落（给 agent 用）
     apply <file>         提交译文
-    finish               回填 + 渲染 + 质检，出 zh.md / bilingual.md / qa.json
+    finish               回填 + 渲染 + 质检，出 中文版.md / 中英对照.md / qa.json
     status [目录]        一行状态，不阻塞、不启动新任务
     doctor               自检（等同「1-开始安装.cmd」的自检）
     version              版本信息
@@ -327,6 +327,9 @@ def finish(args) -> int:
     code = qa.main(["qa", "--workdir", str(workdir)])
     # 质检结果要写进「先读我.txt」，所以这里再刷一次
     merge.refresh_readme(workdir)
+    renamed = merge.rename_outputs(workdir)
+    if renamed:
+        paths.say("[合并] 输出文件：" + "、".join(renamed))
     if code == 0:
         progress.finish_stage("[质检] 全部通过（无需修改译文）")
     else:
@@ -406,7 +409,7 @@ def main(argv: list[str]) -> int:
             "  paper2zh.cmd prepare 论文.pdf  解析并分块\n"
             "  paper2zh.cmd next --limit 10   取 10 段待翻\n"
             "  paper2zh.cmd apply 译文.json   提交译文\n"
-            "  paper2zh.cmd finish --workdir … 出 zh.md 并质检\n"
+            "  paper2zh.cmd finish --workdir … 出 中文版.md 并质检\n"
         ),
     )
     sub = parser.add_subparsers(dest="command")
@@ -533,6 +536,7 @@ def main(argv: list[str]) -> int:
         code = merge.main(["merge", "--workdir", args.workdir, "--docx"])
         if code != 0:
             return code
+        merge.rename_outputs(Path(args.workdir))
         paths.say(f"[导出] 完成：{Path(args.workdir) / 'zh.docx'} 与 bilingual.docx")
         summary = {"ok": True, "workdir": str(args.workdir),
                    "files": [str(Path(args.workdir) / n) for n in ("zh.docx", "bilingual.docx")]}
@@ -552,7 +556,7 @@ def main(argv: list[str]) -> int:
     if args.command == "doctor":
         return doctor(args)
     if args.command == "version":
-        paths.say("paper2zh 1.2.1（本项目 1.2.1；MinerU 4.2.x）")
+        paths.say("paper2zh 1.2.2（本项目 1.2.2；MinerU 4.2.x）")
         return paths.EXIT_OK
     parser.print_help()
     return paths.EXIT_OK
