@@ -25,8 +25,8 @@
 --------
 在 PDF 旁边的「翻译结果」文件夹里：
     中文版.md         中文版
-    zh.docx       中文版 Word（对 AI 说「顺便导出 Word」时才有）
-    bilingual.docx 中英对照 Word
+    中文版.docx       中文版 Word（对 AI 说「顺便导出 Word」时才有）
+    中英对照.docx 中英对照 Word
     中英对照.md  中英对照版
     images\       图片
     先读我.txt    这一份的说明，以及哪几段可能有问题

@@ -455,7 +455,7 @@ def main(argv: list[str]) -> int:
     finish_parser.add_argument("--workdir", required=True)
     finish_parser.add_argument("--json", action="store_true", help="把结果打成 JSON")
     finish_parser.add_argument("--out", help="把结果写成 UTF-8 JSON 文件")
-    finish_parser.add_argument("--docx", action="store_true", help="另外导出一份 Word（zh.docx）")
+    finish_parser.add_argument("--docx", action="store_true", help="另外导出两份 Word（中文版 / 中英对照）")
 
     status_parser = sub.add_parser("status", help="查看进度")
     status_parser.add_argument("--workdir", required=True)
@@ -537,9 +537,9 @@ def main(argv: list[str]) -> int:
         if code != 0:
             return code
         merge.rename_outputs(Path(args.workdir))
-        paths.say(f"[导出] 完成：{Path(args.workdir) / 'zh.docx'} 与 bilingual.docx")
+        paths.say(f"[导出] 完成：{Path(args.workdir) / '中文版.docx'} 与 中英对照.docx")
         summary = {"ok": True, "workdir": str(args.workdir),
-                   "files": [str(Path(args.workdir) / n) for n in ("zh.docx", "bilingual.docx")]}
+                   "files": [str(Path(args.workdir) / n) for n in ("中文版.docx", "中英对照.docx")]}
         if getattr(args, "out", None):
             out = Path(args.out).expanduser()
             out.parent.mkdir(parents=True, exist_ok=True)

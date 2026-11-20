@@ -22,14 +22,20 @@ class RenameOutputsTest(unittest.TestCase):
             (workdir / "先读我.txt").write_text(
                 "打开 zh.md；对照看 bilingual.md。", encoding="utf-8"
             )
+            (workdir / "zh.docx").write_bytes(b"docx")
+            (workdir / "bilingual.docx").write_bytes(b"docx")
 
             renamed = merge.rename_outputs(workdir)
 
-            self.assertEqual(renamed, ["中文版.md", "中英对照.md"])
+            self.assertEqual(renamed, ["中文版.md", "中英对照.md", "中文版.docx", "中英对照.docx"])
             self.assertTrue((workdir / "中文版.md").is_file())
             self.assertTrue((workdir / "中英对照.md").is_file())
             self.assertFalse((workdir / "zh.md").exists())
             self.assertFalse((workdir / "bilingual.md").exists())
+            self.assertTrue((workdir / "中文版.docx").is_file())
+            self.assertTrue((workdir / "中英对照.docx").is_file())
+            self.assertFalse((workdir / "zh.docx").exists())
+            self.assertFalse((workdir / "bilingual.docx").exists())
             text = (workdir / "先读我.txt").read_text(encoding="utf-8")
             self.assertIn("中文版.md", text)
             self.assertIn("中英对照.md", text)

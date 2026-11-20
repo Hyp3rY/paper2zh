@@ -6,7 +6,7 @@
 
 - `finish` 仍先生成内部的 `zh.md` / `bilingual.md`，等质检、Word 导出完成后，自动改名为
   **`中文版.md`** / **`中英对照.md`**；
-- `先读我.txt` 里的文件名同步更新；`export` 事后导出 Word 时也会重新改名；
+- `先读我.txt` 里的文件名同步更新；`finish --docx` / `export` 生成的 Word 也改为 `中文版.docx` / `中英对照.docx`；
 - 旧目录里的 `zh.md` / `bilingual.md` 仍可被质检读取，不影响已有产物；
 - 新增 `tests/test_output_names.py`，覆盖改名和重复执行覆盖。
 

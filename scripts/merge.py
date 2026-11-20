@@ -204,7 +204,8 @@ def refresh_readme(workdir: Path) -> None:
         except json.JSONDecodeError:
             pass
 
-    word_files = [name for name in ("zh.docx", "bilingual.docx") if (workdir / name).is_file()]
+    word_files = [name for name in (ZH_DOCX, BI_DOCX, "zh.docx", "bilingual.docx")
+                  if (workdir / name).is_file()]
     word_line = "".join(f"  {name:<16}Word 版（公式可编辑、图片内嵌）\n" for name in word_files)
     text = f"""这是什么
 ----------
@@ -242,6 +243,8 @@ AI 回复「正在本地解析」就说明技能已加载。
 
 ZH_OUTPUT = "中文版.md"
 BI_OUTPUT = "中英对照.md"
+ZH_DOCX = "中文版.docx"
+BI_DOCX = "中英对照.docx"
 
 
 def rename_outputs(workdir: Path) -> list[str]:
@@ -251,7 +254,12 @@ def rename_outputs(workdir: Path) -> list[str]:
     export 找不到旧文件名。先读我.txt 里的文件名也一并替换。
     """
     workdir = Path(workdir)
-    pairs = [("zh.md", ZH_OUTPUT), ("bilingual.md", BI_OUTPUT)]
+    pairs = [
+        ("zh.md", ZH_OUTPUT),
+        ("bilingual.md", BI_OUTPUT),
+        ("zh.docx", ZH_DOCX),
+        ("bilingual.docx", BI_DOCX),
+    ]
     renamed: list[str] = []
     for old_name, new_name in pairs:
         old = workdir / old_name
@@ -277,7 +285,7 @@ def main(argv: list[str]) -> int:
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument("--workdir", required=True, help="产物目录")
-    parser.add_argument("--docx", action="store_true", help="另外导出一份 Word（zh.docx）")
+    parser.add_argument("--docx", action="store_true", help="另外导出两份 Word（中文版 / 中英对照）")
     args = parser.parse_args(argv[1:])
 
     paths.setup_stdout()
@@ -365,8 +373,8 @@ def main(argv: list[str]) -> int:
     (workdir / "zh.md").write_text(zh_md, encoding="utf-8")
 
     if getattr(args, "docx", False):
-        export_docx(zh_mj, workdir, "zh.docx", source_dir)
-        export_docx(bilingual_mj, workdir, "bilingual.docx", source_dir)
+        export_docx(zh_mj, workdir, ZH_DOCX, source_dir)
+        export_docx(bilingual_mj, workdir, BI_DOCX, source_dir)
 
     (workdir / "bilingual.md").write_text(bilingual_md, encoding="utf-8")
 
@@ -379,7 +387,7 @@ def main(argv: list[str]) -> int:
 
     if not getattr(args, "docx", False):
         md_file = workdir / "zh.md"
-        stale = [name for name in ("zh.docx", "bilingual.docx")
+        stale = [name for name in (ZH_DOCX, BI_DOCX, "zh.docx", "bilingual.docx")
                  if (workdir / name).is_file()
                  and (workdir / name).stat().st_mtime < md_file.stat().st_mtime]
         if stale:

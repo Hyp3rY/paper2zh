@@ -240,7 +240,7 @@ paper2zh.cmd finish --workdir "<产物目录>" --docx     :: 出稿时一起导
 paper2zh.cmd export --workdir "<产物目录>"           :: 事后补导（不重翻、不重检）
 ```
 
-会生成两份：`zh.docx`（中文版）和 `bilingual.docx`（中英对照）。公式是可编辑的 OMML、
+会生成两份：`中文版.docx`（中文版）和 `中英对照.docx`（中英对照）。公式是可编辑的 OMML、
 图片内嵌，适合交稿或继续改。
 
 ## 已知限制
