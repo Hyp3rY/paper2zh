@@ -42,6 +42,11 @@ class RenameOutputsTest(unittest.TestCase):
             self.assertNotIn("zh.md", text)
             self.assertNotIn("bilingual.md", text)
 
+    def test_tag_becomes_plain_equation_number(self):
+        out = merge.github_safe_math(r"$$x = 1,\tag{3}$$")
+        self.assertIn(r"\qquad(3)", out)
+        self.assertNotIn(r"\tag{3}", out)
+
     def test_rerun_overwrites_existing_chinese_names(self):
         with tempfile.TemporaryDirectory() as tmp:
             workdir = Path(tmp)

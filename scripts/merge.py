@@ -241,6 +241,17 @@ AI 回复「正在本地解析」就说明技能已加载。
     (workdir / "先读我.txt").write_text(text, encoding="utf-8")
 
 
+TAG_RE = re.compile(r"\\tag\*?\{([^{}]*)\}")
+
+
+def github_safe_math(md: str) -> str:
+    """GitHub 的 MathJax 会把 \tag{} 渲染成 mlabeledtr，公式会被挤成竖列。
+
+    输出 Markdown 时把编号改成公式内的普通文本；中间结构与 QA 不受影响。
+    """
+    return TAG_RE.sub(lambda match: f"\\qquad({match.group(1)})", md)
+
+
 ZH_OUTPUT = "中文版.md"
 BI_OUTPUT = "中英对照.md"
 ZH_DOCX = "中文版.docx"
@@ -369,6 +380,7 @@ def main(argv: list[str]) -> int:
         bilingual_mj, reference=middle.load_middle(middle_path), enabled=grid_enabled)
     bilingual_md = middle.render_markdown(bilingual_mj, image_renderer=bi_renderer)
     bilingual_md, _ = middle.replace_terms_in_text(bilingual_md, md_replacements)
+    bilingual_md = github_safe_math(bilingual_md)
 
     (workdir / "zh.md").write_text(zh_md, encoding="utf-8")
 
