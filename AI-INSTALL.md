@@ -153,25 +153,66 @@ Test-Path (Join-Path $root "home\.warmed")   # True 表示装完
 
 ## 六、升级旧版本
 
-paper2zh **没有自动升级**。升级时不要覆盖旧目录，建议按下面做：
+paper2zh **没有自动升级**。升级不是重装：**只替换脚本和启动器，不重新下载依赖，也不重新下载模型**。
 
-1. 按第一、二节下载并解压**最新** lite 包到一个新目录，例如 `D:\Tools\paper2zh-<新版本>`；
-2. 在新目录里再跑一次安装：
+先关闭正在运行的翻译任务和 Word，然后按下面做：
+
+1. 找到现有安装目录。安装器登记在 `%USERPROFILE%\.paper2zh\config.json`：
 
    ```powershell
-   $python = Join-Path $root "runtime\python\python.exe"
-   $script = Join-Path $root "skill\paper2zh\scripts\bootstrap.py"
-   & $python $script all
+   $cfg = Get-Content "$env:USERPROFILE\.paper2zh\config.json" -Raw | ConvertFrom-Json
+   $old = $cfg.root
+   if (-not (Test-Path (Join-Path $old "runtime\python\python.exe"))) {
+       throw "config.json 里的 root 不是有效安装目录：$old"
+   }
    ```
 
-   它会重新登记 skill，覆盖旧的 skill 文件；`%USERPROFILE%\.paper2zh` 里的配置和已有的「翻译结果」不会动；
-3. 运行 `doctor.py --json` 自检；
-4. 确认新版本可用后，再删除旧目录。
+2. 下载最新 lite 包并解压到临时目录（照第一、二节即可，**不用**解压到旧目录）：
 
-如果确实要换到原目录：先关闭旧目录里正在运行的程序，把新版解压覆盖进去，再执行一次 `bootstrap.py all`。
+   ```powershell
+   $release = Invoke-RestMethod "https://api.github.com/repos/Hyp3rY/paper2zh/releases/latest"
+   $asset = $release.assets |
+       Where-Object { $_.name -like "*-win-x64-lite.zip" } |
+       Select-Object -First 1
+   if (-not $asset) { throw "最新 Release 里没有 lite 附件" }
 
-> 旧版本留下的 `中文版.md` / `中英对照.md` 不会被自动改名；新版本 `finish` 后产出 `中文版.md` / `中英对照.md`。
-> 升级只换程序文件，不动用户已经翻好的内容。
+   $zip = Join-Path $env:TEMP "paper2zh-upgrade.zip"
+   Invoke-WebRequest -UseBasicParsing -Uri $asset.browser_download_url -OutFile $zip
+   $tmp = Join-Path $env:TEMP "paper2zh-upgrade"
+   Remove-Item $tmp -Recurse -Force -ErrorAction SilentlyContinue
+   Expand-Archive -Path $zip -DestinationPath $tmp -Force
+   $new = Get-ChildItem $tmp -Directory |
+       Where-Object { Test-Path (Join-Path $_.FullName "runtime\python\python.exe") } |
+       Select-Object -First 1 -ExpandProperty FullName
+   if (-not $new) { throw "升级包解压后找不到 runtime\python\python.exe" }
+   ```
+
+3. **只覆盖脚本**，运行时、依赖、模型都不动：
+
+   ```powershell
+   Copy-Item (Join-Path $new "skill\paper2zh\*") (Join-Path $old "skill\paper2zh") `
+       -Recurse -Force
+   Copy-Item (Join-Path $new "paper2zh.cmd") $old -Force
+   ```
+
+4. 用**旧目录里的 Python** 重新登记 skill：
+
+   ```powershell
+   & (Join-Path $old "runtime\python\python.exe") `
+       (Join-Path $old "skill\paper2zh\scripts\install_skill.py")
+   ```
+
+5. 自检：
+
+   ```powershell
+   & (Join-Path $old "runtime\python\python.exe") `
+       (Join-Path $old "skill\paper2zh\scripts\doctor.py") --quick
+   ```
+
+这样升级只需十几秒到一分钟，不会重新下载约 2.8 GB 的依赖和模型。
+
+> 只有依赖清单真的变了（`requirements.lock` 更新）才需要跑 `bootstrap.py deps`；即便如此也不要跑 `all`，模型不用重下。
+> 如果新版本没有改依赖，第 4、5 步就是全部。
 
 ## 七、给 AI 的汇报模板
 
