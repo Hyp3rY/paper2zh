@@ -47,7 +47,7 @@ qa.json          自动检查结果
 一篇 4 页、双栏、带公式 / 图 / 表 / 页眉页脚的合成论文，内容全部虚构：
 
 [示例 PDF](samples/demo-paper/demo-paper.pdf) ·
-[在线版 bilingual.md](samples/demo-paper/翻译结果/demo-paper/中英对照.md) ·
+[在线版 中英对照.md](samples/demo-paper/翻译结果/demo-paper/中英对照.md) ·
 [本地 9B 版](samples/demo-paper/翻译结果/demo-paper-local/中英对照.md) ·
 [样本说明与复现步骤](samples/demo-paper/README.md)
 
