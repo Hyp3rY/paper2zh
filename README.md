@@ -241,7 +241,7 @@ paper2zh.cmd export --workdir "<产物目录>"           :: 事后补导（不�
 ```
 
 会生成两份：`中文版.docx`（中文版）和 `中英对照.docx`（中英对照）。公式是可编辑的 OMML、
-图片内嵌，适合交稿或继续改。
+图片内嵌。Word 里连续的多子图会自动并排成表格，半栏单图放大到页宽，通栏图保持原比例。
 
 ## 已知限制
 
@@ -249,8 +249,10 @@ paper2zh.cmd export --workdir "<产物目录>"           :: 事后补导（不�
 - 无独显的机器慢 3–5 倍（约 7 秒/页）
 - 参考文献、代码块不翻译，保留原文
 - 多栏/复杂版式的阅读顺序取决于 MinerU 的解析结果
-- 图片按原文版面比例显示（`<img width=…>`），多子图按原版面合成表格；
-  要纯 Markdown 语法可设 `PAPER2ZH_PLAIN_IMAGES=1`，关掉子图排版设 `PAPER2ZH_FIGURE_GRID=0`
+- 图片默认：半栏图在单栏 Markdown 里放大到正文宽，最多 720px（宽屏不失控）；通栏图保持原比例。
+  Word 同步处理：连续多图并排成表格，半栏单图放大到页宽。
+  要纯 Markdown 语法可设 `PAPER2ZH_PLAIN_IMAGES=1`，关掉放大设 `PAPER2ZH_FIGURE_EXPAND=0`，
+  关掉多子图表格设 `PAPER2ZH_FIGURE_GRID=0`
 - 安装路径含中文时，程序会自动把推理库复制到 `%LOCALAPPDATA%\paper2zh\libs` 以兼容
 
 > 早期版本叫 `pdf2zh`，因与 [PDFMathTranslate](https://github.com/PDFMathTranslate/PDFMathTranslate) 的同名工具冲突而更名；旧链接会 301 到新仓库。

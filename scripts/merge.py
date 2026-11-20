@@ -167,6 +167,136 @@ def load_translations(path: Path) -> dict[str, str]:
     return table
 
 
+def _image_blobs(paragraph) -> list[bytes]:
+    """取一个段落里所有图片的二进制；用于重新放进表格。"""
+    from docx.oxml.ns import qn
+
+    blobs: list[bytes] = []
+    for blip in paragraph._p.xpath(".//a:blip"):
+        rid = blip.get(qn("r:embed"))
+        part = paragraph.part.related_parts.get(rid) if rid else None
+        if part is not None:
+            blobs.append(part.blob)
+    return blobs
+
+
+def _is_image_paragraph(paragraph) -> bool:
+    return bool(paragraph._p.xpath(".//a:blip")) and not paragraph.text.strip()
+
+
+def _image_widths(paragraph) -> list[int]:
+    widths = []
+    for extent in paragraph._p.xpath(".//wp:extent"):
+        try:
+            widths.append(int(extent.get("cx") or 0))
+        except (TypeError, ValueError):
+            continue
+    return [width for width in widths if width > 0]
+
+
+def _remove_paragraph(paragraph) -> None:
+    element = paragraph._p
+    parent = element.getparent()
+    if parent is not None:
+        parent.remove(element)
+
+
+def postprocess_docx_layout(path: Path) -> dict[str, int]:
+    """Word 版式收尾：单图放大到页宽，连续多图合成表格。
+
+    只在图片段落本身没有文字时动手；图注、正文、公式段落原样保留。
+    """
+    from docx import Document
+    from docx.enum.table import WD_TABLE_ALIGNMENT
+    from docx.enum.text import WD_ALIGN_PARAGRAPH
+    from docx.shared import Emu
+    from io import BytesIO
+
+    doc = Document(str(path))
+    section = doc.sections[0]
+    usable = int(section.page_width - section.left_margin - section.right_margin)
+    stats = {"tables": 0, "expanded": 0, "table_images": 0}
+    paragraphs = list(doc.paragraphs)
+
+    groups: list[tuple[int, int]] = []
+    index = 0
+    while index < len(paragraphs):
+        if not _is_image_paragraph(paragraphs[index]):
+            index += 1
+            continue
+        end = index + 1
+        while end < len(paragraphs) and _is_image_paragraph(paragraphs[end]):
+            end += 1
+        if end - index >= 2:
+            groups.append((index, end))
+        index = end
+
+    # 从后往前处理，前面的段落序号不受影响
+    for start, end in reversed(groups):
+        members = paragraphs[start:end]
+        blobs = []
+        for member in members:
+            blobs.extend(_image_blobs(member))
+        if len(blobs) < 2:
+            continue
+        if any(width >= usable * 0.80 for member in members for width in _image_widths(member)):
+            # 原来就是通栏大图，继续保持上下排；不要为了表格硬压成两列
+            continue
+        count = len(blobs)
+        cols = 2 if count in (2, 4) else 3 if count in (3, 6) else 2
+        if count > 6:
+            cols = 3
+        rows = (count + cols - 1) // cols
+        table = doc.add_table(rows=rows, cols=cols)
+        table.alignment = WD_TABLE_ALIGNMENT.CENTER
+        table.autofit = False
+        try:
+            table.style = doc.styles["Normal Table"]
+        except KeyError:
+            pass
+        cell_w = max(int(usable / cols) - 60000, 100000)
+        pic_w = max(cell_w - 40000, 80000)
+        for offset, blob in enumerate(blobs):
+            row, col = divmod(offset, cols)
+            cell = table.cell(row, col)
+            cell.width = Emu(cell_w)
+            paragraph = cell.paragraphs[0]
+            paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            try:
+                paragraph.add_run().add_picture(BytesIO(blob), width=Emu(pic_w))
+            except Exception:
+                continue
+        first = members[0]
+        first._p.addprevious(table._tbl)
+        for member in members:
+            _remove_paragraph(member)
+        stats["tables"] += 1
+        stats["table_images"] += count
+
+    # 单图：半栏图放大到页宽；已经在表格里、或带文字的图片不动
+    for shape in list(doc.inline_shapes):
+        parents = shape._inline.xpath("ancestor::w:p")
+        if not parents:
+            continue
+        paragraph = parents[-1]
+        if paragraph.xpath("ancestor::w:tbl"):
+            continue
+        text = "".join(node.text or "" for node in paragraph.xpath(".//w:t"))
+        if text.strip():
+            continue
+        old_w = int(shape.width)
+        if old_w <= 0 or old_w >= usable * 0.75:
+            continue
+        ratio = usable / old_w
+        shape.width = Emu(usable)
+        shape.height = Emu(int(shape.height * ratio))
+        stats["expanded"] += 1
+
+    if stats["tables"] or stats["expanded"]:
+        doc.save(str(path))
+    return stats
+
+
 def export_docx(model, workdir: Path, filename: str, source_dir: Path) -> None:
     """用 MinerU 的 DOCX 渲染器导出一份 Word（公式转 OMML、图片内嵌）。"""
     try:
@@ -184,7 +314,17 @@ def export_docx(model, workdir: Path, filename: str, source_dir: Path) -> None:
 
         data = render(model, RenderFormat.DOCX,
                       options=DocxRenderOptions(asset_resolver=resolve_asset))
-        (workdir / filename).write_bytes(data)
+        target = workdir / filename
+        target.write_bytes(data)
+        try:
+            layout = postprocess_docx_layout(target)
+            if layout["tables"] or layout["expanded"]:
+                paths.say(
+                    f"[合并] Word 版式：{layout['tables']} 组多图并排，"
+                    f"{layout['expanded']} 张单图放大"
+                )
+        except Exception as exc:
+            paths.say(f"[合并] Word 版式收尾跳过：{type(exc).__name__}: {str(exc)[:100]}")
         paths.say(f"[合并] Word：{filename}（{len(data) / 1024:.0f} KB，含图片与公式）")
     except Exception as exc:  # 导出失败不影响 md
         paths.say(f"[合并] {filename} 导出失败（不影响 Markdown）：{type(exc).__name__}: {str(exc)[:120]}")

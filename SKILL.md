@@ -262,6 +262,7 @@ paper2zh.cmd finish --workdir "<产物目录>"
 
 产出：`中文版.md`（纯中文）、`中英对照.md`（段落英中交替）、`qa.json`、`先读我.txt`；
 加 `--docx` 会多出两份 Word：`中文版.docx` 与 `中英对照.docx`（公式转 OMML、图片内嵌，可直接编辑）。
+Word 里连续多图会并排成表格，半栏单图放大到页宽，通栏图保持原比例。
 事后想补，用 `paper2zh.cmd export --workdir "<产物目录>"`，不必重新质检。
 
 **屏幕输出可能乱码**（IDE / 工具进程捕获时常见）：以 `<产物目录>\run.log` 为准，

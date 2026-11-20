@@ -122,6 +122,10 @@ def dump_middle(mj, path: Path) -> None:
 PAGE_WIDTH_PX = 794
 MIN_IMAGE_PX = 140
 MAX_IMAGE_PX = 760
+# 双栏论文里的半栏图，在单栏 Markdown 里放大到接近正文宽；
+# 720px 是给宽屏的上限，避免在 2K/4K 屏上大得离谱。
+COLUMN_FIGURE_RATIO = 0.70
+EXPANDED_IMAGE_PX = 720
 
 
 def _image_source(block: Any) -> str:
@@ -146,6 +150,7 @@ def make_image_renderer():
     import os
 
     plain = os.environ.get("PAPER2ZH_PLAIN_IMAGES", "").strip() not in ("", "0", "false")
+    expand = os.environ.get("PAPER2ZH_FIGURE_EXPAND", "1").strip() not in ("0", "false", "no")
 
     def renderer(block: Any) -> str:
         source = _image_source(block)
@@ -162,11 +167,17 @@ def make_image_renderer():
                 width = 0.0
         if width <= 0:
             width = 0.8
-        pixels = int(round(width * PAGE_WIDTH_PX))
+        if expand and width < COLUMN_FIGURE_RATIO:
+            pixels = EXPANDED_IMAGE_PX
+            style = ' style="max-width:100%;height:auto"'
+        else:
+            pixels = int(round(width * PAGE_WIDTH_PX))
+            pixels = max(MIN_IMAGE_PX, min(MAX_IMAGE_PX, pixels))
+            style = ""
         pixels = max(MIN_IMAGE_PX, min(MAX_IMAGE_PX, pixels))
         # alt 留空：图注里常带 $…$ 与「图 3」这类引用，
         # 塞进 alt 会被公式/引用闸门重复计数（实测 fig 29→32、行内 $ 90→92）。
-        return f'<img src="{_html.escape(source, quote=True)}" width="{pixels}" alt="">'
+        return f'<img src="{_html.escape(source, quote=True)}" width="{pixels}"{style} alt="">'
 
     return renderer
 
